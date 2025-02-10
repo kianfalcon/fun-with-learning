@@ -532,3 +532,603 @@
 
         // Initialize the game
         initializePuzzle();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIAN Balance Puzzle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .cell:hover {
+            background-color: #f3f4f6;
+            transform: scale(1.05);
+        }
+
+        .cell.highlighted {
+            border: 2px solid #f59e0b;
+            background-color: #fef3c7;
+            animation: pulse 1.5s infinite;
+        }
+
+        .cell.error {
+            border: 2px solid #ef4444;
+            background-color: #fee2e2;
+        }
+
+        .example-cell {
+            width: 35px;
+            height: 35px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .constraint {
+            width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white min-h-screen py-6">
+    <div class="container mx-auto px-4 max-w-3xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-900">Balance & Harmony</h1>
+            <p class="text-indigo-600 mt-2">Create perfect balance between chairs and nature</p>
+        </div>
+
+        <!-- Game Area -->
+        <div class="flex flex-col items-center gap-6">
+            <!-- Timer -->
+            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md">
+                ⏱️ <span id="timer" class="font-mono text-lg">0:00</span>
+            </div>
+
+            <!-- Puzzle Grid Container -->
+            <div class="bg-indigo-50 p-6 rounded-xl shadow-lg">
+                <div id="puzzleGrid" class="flex flex-col items-center gap-2"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-4">
+                <button id="hintBtn" class="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-md flex items-center gap-2">
+                    💡 Get Hint
+                </button>
+                <button id="clearBtn" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-md flex items-center gap-2">
+                    🔄 Clear
+                </button>
+                <button id="doneBtn" class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md flex items-center gap-2">
+                    ✓ Check
+                </button>
+            </div>
+
+            <!-- Message Area -->
+            <div id="messageArea" class="w-full"></div>
+
+            <!-- Instructions -->
+            <div class="bg-white p-6 rounded-xl shadow-lg w-full space-y-6">
+                <h2 class="font-bold text-xl text-indigo-900 border-b pb-2">How to Play</h2>
+                
+                <!-- Rule 1: Basic Movement -->
+                <div class="flex items-start gap-4 p-4 bg-indigo-50 rounded-lg">
+                    <div class="flex gap-2">
+                        <div class="example-cell"></div>
+                        <div class="example-cell">🪑</div>
+                        <div class="example-cell">🌿</div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-indigo-900">Click cells to cycle:</p>
+                        <p class="text-indigo-700">Empty → Chair → Leaf</p>
+                    </div>
+                </div>
+
+                <!-- Rule 2: Balance -->
+                <div class="flex items-start gap-4 p-4 bg-green-50 rounded-lg">
+                    <div class="grid grid-cols-4 gap-1">
+                        <div class="example-cell">🪑</div>
+                        <div class="example-cell">🌿</div>
+                        <div class="example-cell">🪑</div>
+                        <div class="example-cell">🌿</div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-green-800">Balance Rule:</p>
+                        <p class="text-green-700">Each row and column must have equal chairs and leaves</p>
+                    </div>
+                </div>
+
+                <!-- Rule 3: No Three in a Row -->
+                <div class="flex items-start gap-4 p-4 bg-red-50 rounded-lg">
+                    <div class="flex gap-4">
+                        <div class="flex flex-col items-center">
+                            <div class="flex gap-1">
+                                <div class="example-cell">🪑</div>
+                                <div class="example-cell">🪑</div>
+                                <div class="example-cell">🪑</div>
+                            </div>
+                            <span class="text-red-500 mt-1">✗</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="flex gap-1">
+                                <div class="example-cell">🪑</div>
+                                <div class="example-cell">🌿</div>
+                                <div class="example-cell">🪑</div>
+                            </div>
+                            <span class="text-green-500 mt-1">✓</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-red-800">Adjacent Rule:</p>
+                        <p class="text-red-700">No more than two same symbols can be adjacent</p>
+                    </div>
+                </div>
+
+                <!-- Rule 4: Constraints -->
+                <div class="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                    <div class="flex gap-6">
+                        <div class="flex items-center gap-2">
+                            <div class="example-cell">🪑</div>
+                            <span class="font-bold text-green-600">=</span>
+                            <div class="example-cell">🪑</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="example-cell">🪑</div>
+                            <span class="font-bold text-red-600">×</span>
+                            <div class="example-cell">🌿</div>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-blue-800">Constraint Rules:</p>
+                        <p class="text-blue-700">'=' means same symbols, '×' means different symbols</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game constants
+        const EMPTY = 0, CHAIR = 1, ECO = 2;
+        const SUSTAINABILITY_FACTS = [
+            "KIAN uses recycled materials in over 60% of our furniture products.",
+            "Our sustainable practices have helped save over 1000 trees annually.",
+            "We're committed to reducing our carbon footprint by 50% by 2030."
+        ];
+
+        // Grid configuration
+        const horizontalConstraints = [
+            [null, '=', null, null],
+            [null, 'X', null, null],
+            [null, null, '=', null],
+            [null, null, null, null]
+        ];
+
+        const verticalConstraints = [
+            [null, null, 'X', null],
+            [null, '=', null, null],
+            [null, null, null, null],
+            [null, null, null, null]
+        ];
+
+        // Game state
+        let grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
+        let timer = 0;
+        let timerInterval = null;
+        let isGameActive = false;
+
+        // Timer functions
+        function startTimer() {
+            if (!isGameActive) {
+                isGameActive = true;
+                timerInterval = setInterval(() => {
+                    timer++;
+                    updateTimerDisplay();
+                }, 1000);
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isGameActive = false;
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timer = 0;
+            updateTimerDisplay();
+        }
+
+        // Grid initialization
+        function initializePuzzle() {
+            const puzzleGrid = document.getElementById('puzzleGrid');
+            puzzleGrid.innerHTML = '';
+
+            for (let i = 0; i < 4; i++) {
+                if (i > 0) {
+                    const verticalRow = document.createElement('div');
+                    verticalRow.className = 'flex gap-1';
+                    for (let j = 0; j < 4; j++) {
+                        const constraintCell = document.createElement('div');
+                        constraintCell.className = 'w-[60px] flex justify-center h-6';
+                        if (verticalConstraints[i-1][j]) {
+                            constraintCell.innerHTML = `
+                                <div class="constraint ${verticalConstraints[i-1][j] === '=' ? 'text-green-600' : 'text-red-600'}">
+                                    ${verticalConstraints[i-1][j]}
+                                </div>
+                            `;
+                        }
+                        verticalRow.appendChild(constraintCell);
+                    }
+                    puzzleGrid.appendChild(verticalRow);
+                }
+
+                const row = document.createElement('div');
+                row.className = 'flex gap-1';
+                
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => cycleCell(i, j));
+                    row.appendChild(cell);
+
+                    if (j < 3 && horizontalConstraints[i][j]) {
+                        const constraint = document.createElement('div');
+                        constraint.className = `constraint ${horizontalConstraints[i][j] === '=' ? 'text-green-600' : 'text-red-600'}`;
+                        constraint.textContent = horizontalConstraints[i][j];
+                        row.appendChild(constraint);
+                    }
+                }
+                puzzleGrid.appendChild(row);
+            }
+        }
+
+        // Game logic
+        function validateMove(row, col) {
+            // Check horizontal three-in-a-row
+            if (col < 2 && grid[row][col] !== EMPTY &&
+                grid[row][col] === grid[row][col+1] && 
+                grid[row][col] === grid[row][col+2]) {
+                return {
+                    valid: false,
+                    message: `Three ${grid[row][col] === CHAIR ? '🪑' : '🌿'} in a row detected.`,
+                    cells: [[row,col], [row,col+1], [row,col+2]]
+                };
+            }
+
+            // Check vertical three-in-a-row
+            if (row < 2 && grid[row][col] !== EMPTY &&
+                grid[row][col] === grid[row+1][col] && 
+                grid[row][col] === grid[row+2][col]) {
+                return {
+                    valid: false,
+                    message: `Three ${grid[row][col] === CHAIR ? '🪑' : '🌿'} in a column detected.`,
+                    cells: [[row,col], [row+1,col], [row+2,col]]
+                };
+            }
+
+            // Check horizontal constraints
+            if (col < 3 && horizontalConstraints[row][col] && 
+                grid[row][col] !== EMPTY && grid[row][col+1] !== EMPTY) {
+                if ((horizontalConstraints[row][col] === '=' && grid[row][col] !== grid[row][col+1]) ||
+                    (horizontalConstraints[row][col] === 'X' && grid[row][col] === grid[row][col+1])) {
+                    return {
+                        valid: false,
+                        message: horizontalConstraints[row][col] === '=' ? 
+                            'These cells must match' : 'These cells must be different',
+                        cells: [[row,col], [row,col+1]]
+                    };
+                }
+            }
+
+            // Check vertical constraints
+            if (row < 3 && verticalConstraints[row][col] && 
+                grid[row][col] !== EMPTY && grid[row+1][col] !== EMPTY) {
+                if ((verticalConstraints[row][col] === '=' && grid[row][col] !== grid[row+1][col]) ||
+                    (verticalConstraints[row][col] === 'X' && grid[row][col] === grid[row+1][col])) {
+                    return {
+                        valid: false,
+                        message: verticalConstraints[row][col] === '=' ? 
+                            'These cells must match' : 'These cells must be different',
+                        cells: [[row,col], [row+1,col]]
+                    };
+                }
+            }
+
+            return { valid: true };
+        }
+
+        function cycleCell(row, col) {
+            if (!isGameActive) startTimer();
+            
+            grid[row][col] = (grid[row][col] + 1) % 3;
+            updateCell(row, col);
+            
+            const validation = validateMove(row, col);
+            if (!validation.valid) {
+                highlightCells(validation.cells, 'error');
+                showMessage(validation.message);
+            } else {
+                clearHighlights();
+            }
+        }
+
+        function updateCell(row, col) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            cell.textContent = grid[row][col] === CHAIR ? '🪑' : grid[row][col] === ECO ? '🌿' : '';
+        }
+
+        function highlightCells(cells, type = 'highlighted') {
+            clearHighlights();
+            cells.forEach(([row, col]) => {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                cell.classList.add(type);
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('error', 'highlighted');
+            });
+        }
+
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `
+                <div class="p-4 rounded-lg ${type === 'success' ? 'bg-green-50' : 'bg-amber-50'} 
+                     border ${type === 'success' ? 'border-green-200' : 'border-amber-200'}
+                     shadow-md">
+                    <p class="${type === 'success' ? 'text-green-800' : 'text-amber-800'}">${message}</p>
+                </div>
+            `;
+            if (type !== 'success') {
+                setTimeout(() => messageArea.innerHTML = '', 5000);
+            }
+        }
+
+        function generateHint() {
+            // First check for empty cells
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (grid[i][j] === EMPTY) {
+                        return {
+                            message: "Start by filling in empty cells",
+                            cells: [[i, j]],
+                            suggestion: "Click to place either a 🪑 or 🌿"
+                        };
+                    }
+                }
+            }
+
+            // Check row balance
+            for (let i = 0; i < 4; i++) {
+                const rowChairs = grid[i].filter(cell => cell === CHAIR).length;
+                const rowEco = grid[i].filter(cell => cell === ECO).length;
+                if (rowChairs !== rowEco && (rowChairs + rowEco === 4)) {
+                    return {
+                        message: `Row ${i + 1} needs balance`,
+                        cells: [[i, 0], [i, 1], [i, 2], [i, 3]],
+                        suggestion: `This row has ${rowChairs} 🪑 and ${rowEco} 🌿. Adjust to make them equal.`
+                    };
+                }
+            }
+
+            // Check column balance
+            for (let j = 0; j < 4; j++) {
+                const colChairs = grid.map(row => row[j]).filter(cell => cell === CHAIR).length;
+                const colEco = grid.map(row => row[j]).filter(cell => cell === ECO).length;
+                if (colChairs !== colEco && (colChairs + colEco === 4)) {
+                    return {
+                        message: `Column ${j + 1} needs balance`,
+                        cells: [[0, j], [1, j], [2, j], [3, j]],
+                        suggestion: `This column has ${colChairs} 🪑 and ${colEco} 🌿. Adjust to make them equal.`
+                    };
+                }
+            }
+
+            // Check for violations
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 2; j++) {
+                    // Check horizontal three in a row
+                    if (grid[i][j] !== EMPTY && 
+                        grid[i][j] === grid[i][j+1] && 
+                        grid[i][j] === grid[i][j+2]) {
+                        return {
+                            message: "Three in a row detected",
+                            cells: [[i,j], [i,j+1], [i,j+2]],
+                            suggestion: `Change one ${grid[i][j] === CHAIR ? '🪑' : '🌿'} to a ${grid[i][j] === CHAIR ? '🌿' : '🪑'}`
+                        };
+                    }
+                    
+                    // Check vertical three in a row
+                    if (i < 2 && grid[i][j] !== EMPTY && 
+                        grid[i][j] === grid[i+1][j] && 
+                        grid[i][j] === grid[i+2][j]) {
+                        return {
+                            message: "Three in a column detected",
+                            cells: [[i,j], [i+1,j], [i+2,j]],
+                            suggestion: `Change one ${grid[i][j] === CHAIR ? '🪑' : '🌿'} to a ${grid[i][j] === CHAIR ? '🌿' : '🪑'}`
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function checkCompletion() {
+            // Check if all cells are filled
+            if (!grid.every(row => row.every(cell => cell !== EMPTY))) {
+                return { complete: false, message: "Fill all cells before checking completion" };
+            }
+
+            // Check row and column balance
+            for (let i = 0; i < 4; i++) {
+                const rowChairs = grid[i].filter(cell => cell === CHAIR).length;
+                const rowEco = grid[i].filter(cell => cell === ECO).length;
+                const colChairs = grid.map(row => row[i]).filter(cell => cell === CHAIR).length;
+                const colEco = grid.map(row => row[i]).filter(cell => cell === ECO).length;
+
+                if (rowChairs !== rowEco || colChairs !== colEco) {
+                    return { complete: false, message: "Each row and column must have equal chairs and leaves" };
+                }
+            }
+
+            // Check for violations
+            const hint = generateHint();
+            if (hint) {
+                return { complete: false, message: hint.message };
+            }
+
+            return { complete: true };
+        }
+
+        // Event handlers
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            const hint = generateHint();
+            if (hint) {
+                highlightCells(hint.cells);
+                showMessage(`${hint.message}: ${hint.suggestion}`);
+            } else {
+                showMessage("Everything looks good! Keep going!");
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
+            initializePuzzle();
+            resetTimer();
+            clearHighlights();
+            document.getElementById('messageArea').innerHTML = '';
+        });
+
+        document.getElementById('doneBtn').addEventListener('click', () => {
+            const result = checkCompletion();
+            if (result.complete) {
+                stopTimer();
+                const fact = SUSTAINABILITY_FACTS[Math.floor(Math.random() * SUSTAINABILITY_FACTS.length)];
+                showMessage(`
+                    <div class="space-y-4">
+                        <p class="font-bold text-lg">🎉 Congratulations!</p>
+                        <p>You completed the puzzle in ${formatTime(timer)}!</p>
+                        <div class="mt-4 p-4 bg-green-100 rounded-lg">
+                            <h3 class="font-semibold mb-2">Sustainability Fact:</h3>
+                            <p>${fact}</p>
+                        </div>
+                    </div>
+                `, 'success');
+            } else {
+                showMessage(result.message);
+            }
+        });
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize the game
+        initializePuzzle();
+
+        // Keyboard controls for accessibility
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'h' || e.key === 'H') {
+                document.getElementById('hintBtn').click();
+            } else if (e.key === 'r' || e.key === 'R') {
+                document.getElementById('clearBtn').click();
+            } else if (e.key === 'Enter' || e.key === ' ') {
+                document.getElementById('doneBtn').click();
+            }
+        });
+
+        // Add tooltips for better user experience
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', (e) => {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'absolute bg-gray-800 text-white px-2 py-1 rounded text-sm -top-8 left-1/2 transform -translate-x-1/2';
+                
+                switch(button.id) {
+                    case 'hintBtn':
+                        tooltip.textContent = 'Get a hint (H)';
+                        break;
+                    case 'clearBtn':
+                        tooltip.textContent = 'Reset puzzle (R)';
+                        break;
+                    case 'doneBtn':
+                        tooltip.textContent = 'Check solution (Enter)';
+                        break;
+                }
+                
+                button.style.position = 'relative';
+                button.appendChild(tooltip);
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                const tooltip = button.querySelector('div');
+                if (tooltip) tooltip.remove();
+            });
+        });
+
+        // Add quick start guide
+        const quickStartGuide = `
+            <div class="mt-8 bg-indigo-50 p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-bold text-indigo-900 mb-4">Quick Tips</h3>
+                <ul class="space-y-2 text-indigo-700">
+                    <li>• Start with corners and edges first</li>
+                    <li>• Pay attention to constraint symbols (= and ×)</li>
+                    <li>• Keep track of the balance in each row and column</li>
+                    <li>• Use hints if you get stuck</li>
+                </ul>
+            </div>
+        `;
+        document.querySelector('.container').insertAdjacentHTML('beforeend', quickStartGuide);
+
+        // Add sustainability commitment message
+        const sustainabilityMessage = `
+            <div class="mt-4 text-center text-indigo-600 text-sm">
+                <p>Each puzzle completion contributes to raising awareness about sustainable furniture practices.</p>
+                <p class="mt-2">🌿 Join us in making a difference! 🌿</p>
+            </div>
+        `;
+        document.querySelector('.container').insertAdjacentHTML('beforeend', sustainabilityMessage);
+    </script>
+</body>
+</html>
