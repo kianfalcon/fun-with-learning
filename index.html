@@ -7,9 +7,9 @@ const CHAIR = 1;
 const ECO = 2;
 
 const SUSTAINABILITY_FACTS = [
-  "Did you know? KIAN's commitment to sustainability has led to a 30% reduction in our carbon footprint.",
+  "Did you know? KIAN's commitment to sustainability has led to a 30% reduction in our carbon footprint over the last 5 years.",
   "KIAN uses recycled materials in over 60% of our furniture products.",
-  "Our sustainable practices have helped save over 1000 trees annually."
+  "Our sustainable practices have helped save over 1000 trees annually through our eco-friendly manufacturing processes."
 ];
 
 const KianPuzzle = () => {
@@ -58,7 +58,6 @@ const KianPuzzle = () => {
   };
 
   const checkCompletion = (grid) => {
-    // Check if grid is filled
     const isFilled = grid.every(row => row.every(cell => cell !== EMPTY));
     if (!isFilled) return false;
 
@@ -76,13 +75,15 @@ const KianPuzzle = () => {
     // Check for three in a row
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 2; j++) {
+        // Horizontal check
         if (grid[i][j] !== EMPTY && 
             grid[i][j] === grid[i][j+1] && 
             grid[i][j] === grid[i][j+2]) return false;
         
-        if (j < 2 && grid[i][j] !== EMPTY && 
-            grid[i][j] === grid[i+1][j] && 
-            grid[i][j] === grid[i+2][j]) return false;
+        // Vertical check
+        if (grid[j][i] !== EMPTY && 
+            grid[j][i] === grid[j+1][i] && 
+            grid[j][i] === grid[j+2][i]) return false;
       }
     }
 
@@ -93,20 +94,35 @@ const KianPuzzle = () => {
           if (horizontalConstraints[i][j] === '=' && grid[i][j] !== grid[i][j+1]) return false;
           if (horizontalConstraints[i][j] === 'X' && grid[i][j] === grid[i][j+1]) return false;
         }
-        if (i < 3 && verticalConstraints[i][j]) {
-          if (verticalConstraints[i][j] === '=' && grid[i][j] !== grid[i+1][j]) return false;
-          if (verticalConstraints[i][j] === 'X' && grid[i][j] === grid[i+1][j]) return false;
-        }
       }
     }
 
     return true;
   };
 
+  const handleDoneClick = () => {
+    const isValid = checkCompletion(grid);
+    
+    if (!grid.every(row => row.every(cell => cell !== EMPTY))) {
+      showIncompleteMessage("Fill all cells before checking your solution!");
+      return;
+    }
+
+    if (isValid) {
+      setIsComplete(true);
+      setIsActive(false);
+    } else {
+      const currentHint = generateHint();
+      setHighlightedCells(currentHint.highlight);
+      showIncompleteMessage("Nice try! But there are still some issues. Click 'Get Hint' for help.");
+    }
+  };
+
   const generateHint = () => {
     // Check for three in a row violations
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 2; j++) {
+        // Horizontal check
         if (grid[i][j] !== EMPTY && 
             grid[i][j] === grid[i][j+1] && 
             grid[i][j] === grid[i][j+2]) {
@@ -119,7 +135,7 @@ const KianPuzzle = () => {
       }
     }
 
-    // Check constraints
+    // Check constraint violations
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 3; j++) {
         if (horizontalConstraints[i][j]) {
@@ -149,12 +165,11 @@ const KianPuzzle = () => {
     for (let i = 0; i < 4; i++) {
       const rowChairs = grid[i].filter(cell => cell === CHAIR).length;
       const rowEco = grid[i].filter(cell => cell === ECO).length;
-      const filledCells = rowChairs + rowEco;
-      if (filledCells === 4 && rowChairs !== rowEco) {
+      if (rowChairs > 2 || rowEco > 2) {
         return {
-          tip: "Each row must have an equal number of chairs and sustainability symbols.",
+          tip: `Row ${i + 1} must have an equal number of chairs and sustainability symbols.`,
           highlight: [[i, 0], [i, 1], [i, 2], [i, 3]],
-          solution: `This row has ${rowChairs} 🪑 and ${rowEco} 🌿. Adjust to make them equal.`
+          solution: `This row needs balance: currently has ${rowChairs} 🪑 and ${rowEco} 🌿`
         };
       }
     }
@@ -162,25 +177,8 @@ const KianPuzzle = () => {
     return {
       tip: "Keep going! Remember to maintain balance in rows and columns.",
       highlight: [],
-      solution: "Try filling empty cells while following the rules."
+      solution: "Each row and column should have the same number of chairs and sustainability symbols."
     };
-  };
-
-  const handleDoneClick = () => {
-    if (!grid.every(row => row.every(cell => cell !== EMPTY))) {
-      showIncompleteMessage("Fill all cells before checking your solution!");
-      return;
-    }
-
-    const isValid = checkCompletion(grid);
-    if (isValid) {
-      setIsComplete(true);
-      setIsActive(false);
-    } else {
-      const hint = generateHint();
-      setHighlightedCells(hint.highlight);
-      showIncompleteMessage("Nice try! But there are still some issues. Click 'Get Hint' for help.");
-    }
   };
 
   const showIncompleteMessage = (message) => {
@@ -235,18 +233,15 @@ const KianPuzzle = () => {
         content = "";
     }
 
-    const cellClasses = [
-      "w-16 h-16",
-      "flex items-center justify-center",
-      "text-3xl cursor-pointer",
-      "border border-indigo-200",
-      hasError ? "bg-red-50" : isHighlighted ? "bg-amber-50" : "bg-white",
-      value === EMPTY ? "hover:bg-indigo-50" : "hover:bg-indigo-100",
-      "transition-colors duration-200"
-    ].join(" ");
-
     return (
-      <div className={cellClasses} onClick={() => cycleCell(row, col)}>
+      <div 
+        className={`w-16 h-16 flex items-center justify-center text-3xl cursor-pointer 
+          border border-indigo-200
+          ${hasError ? "bg-red-50" : isHighlighted ? "bg-amber-50" : "bg-white"}
+          ${value === EMPTY ? "hover:bg-indigo-50" : "hover:bg-indigo-100"}
+          transition-colors duration-200`}
+        onClick={() => cycleCell(row, col)}
+      >
         {content}
       </div>
     );
@@ -333,63 +328,10 @@ const KianPuzzle = () => {
               <Check className="h-4 w-4 text-green-800" />
               <AlertTitle className="text-green-800 text-xl font-bold">Congratulations!</AlertTitle>
               <AlertDescription className="space-y-4">
-
-                         <AlertDescription className="space-y-4">
                 <p className="text-green-700">
                   You've completed the puzzle in {formatTime(time)}!
                 </p>
                 <div className="bg-white p-4 rounded-lg">
                   <h3 className="font-semibold text-green-800 mb-2">Did You Know?</h3>
                   <p className="text-green-700">
-                    {SUSTAINABILITY_FACTS[Math.floor(Math.random() * SUSTAINABILITY_FACTS.length)]}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4 text-indigo-500" />
-                  <a 
-                    href="https://www.kian.com/products" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-indigo-500 hover:text-indigo-600"
-                  >
-                    Discover more sustainable furniture at KIAN
-                  </a>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-
-        <div className="bg-white p-8 rounded-lg shadow-xl border border-indigo-100">
-          <div className="grid grid-cols-4 gap-0 relative">
-            {grid.map((row, rowIndex) => (
-              row.map((cell, colIndex) => (
-                <div key={`${rowIndex}-${colIndex}`} className="relative">
-                  {renderCell(cell, rowIndex, colIndex)}
-                  {/* Horizontal constraints */}
-                  {colIndex < 3 && horizontalConstraints[rowIndex][colIndex] && (
-                    <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                      <span className={`font-bold text-lg ${horizontalConstraints[rowIndex][colIndex] === '=' ? 'text-green-600' : 'text-red-600'}`}>
-                        {horizontalConstraints[rowIndex][colIndex]}
-                      </span>
-                    </div>
-                  )}
-                  {/* Vertical constraints */}
-                  {rowIndex < 3 && verticalConstraints[rowIndex][colIndex] && (
-                    <div className="absolute left-1/2 -bottom-3 transform -translate-x-1/2 z-10">
-                      <span className={`font-bold text-lg ${verticalConstraints[rowIndex][colIndex] === '=' ? 'text-green-600' : 'text-red-600'}`}>
-                        {verticalConstraints[rowIndex][colIndex]}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default KianPuzzle;
+                    {SUSTAINABILITY_FACTS[Math.floor(Math.random() *
