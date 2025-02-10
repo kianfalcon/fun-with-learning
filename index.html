@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIAN Eco-Balance Puzzle</title>
+    <title>KIAN Balance Puzzle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .cell {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             border: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.75rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .cell:hover {
@@ -25,13 +25,12 @@
         .cell.highlighted {
             border: 2px solid #f59e0b;
             background-color: #fef3c7;
-            animation: pulse 2s infinite;
+            animation: pulse 1.5s infinite;
         }
 
         .cell.error {
             border: 2px solid #ef4444;
             background-color: #fee2e2;
-            animation: shake 0.5s;
         }
 
         @keyframes pulse {
@@ -40,229 +39,67 @@
             100% { transform: scale(1); }
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
         .constraint {
-            width: 24px;
+            width: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
             font-weight: bold;
-        }
-
-        .example-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 32px);
-            gap: 4px;
-        }
-
-        .example-cell {
-            width: 32px;
-            height: 32px;
-            border: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            max-width: 500px;
-            margin: 2rem auto;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            color: #4f46e5;
         }
     </style>
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white min-h-screen py-8">
-    <div class="container mx-auto px-4 max-w-4xl">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <h1 class="text-4xl font-bold text-indigo-900">Furniture & Nature: A KIAN Logic Game</h1>
-            <img src="/api/placeholder/50/50" alt="KIAN Falcon Logo" class="h-12 w-12">
+<body class="bg-gradient-to-b from-indigo-50 to-white min-h-screen py-6">
+    <div class="container mx-auto px-4 max-w-lg">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-indigo-900">Balance & Harmony</h1>
+            <p class="text-indigo-600 text-sm">Place chairs and leaves to create balance</p>
         </div>
 
-        <!-- Game Controls -->
-        <div class="flex gap-4 mb-6">
-            <button id="hintBtn" class="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors shadow-md">
-                💡 Get Hint
+        <!-- Puzzle Grid Container -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-4">
+            <div id="puzzleGrid" class="flex flex-col items-center"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-wrap justify-center gap-3 mb-4">
+            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded shadow-md">
+                ⏱️ <span id="timer" class="font-mono">0:00</span>
+            </div>
+            <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors">
+                💡 Hint
             </button>
-            <button id="resetBtn" class="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors shadow-md">
-                🔄 Reset
+            <button id="clearBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                🔄 Clear
             </button>
-            <button id="doneBtn" class="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors shadow-md">
+            <button id="doneBtn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
                 ✓ Done
             </button>
-            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded shadow-md">
-                ⏱️ <span id="timer">0:00</span>
-            </div>
         </div>
 
-        <!-- Messages Area -->
-        <div id="messageArea" class="mb-6"></div>
+        <!-- Message Area -->
+        <div id="messageArea" class="mb-4"></div>
 
-        <!-- Main Game Area -->
-        <div class="flex flex-col items-center gap-8">
-            <!-- Puzzle Grid -->
-            <div class="bg-white p-8 rounded-lg shadow-xl border border-indigo-100 w-fit mx-auto">
-                <div id="puzzleGrid"></div>
-            </div>
-
-            <!-- Instructions -->
-            <div class="bg-white p-6 rounded-lg shadow-lg w-full border border-indigo-200">
-                <h2 class="text-xl font-bold text-indigo-900 mb-4">How to Play</h2>
-                <ul class="space-y-6 text-indigo-900">
-                    <li class="flex items-center gap-2">
-                        <span class="text-amber-500">•</span>
-                        Fill the grid with either chairs (🪑) or sustainability symbols (🌿)
-                    </li>
-                    <li>
-                        <div class="bg-indigo-50 p-4 rounded-lg">
-                            <h3 class="font-semibold mb-2 flex items-center gap-2">
-                                <span class="text-amber-500">•</span>
-                                Adjacent Rule
-                            </h3>
-                            <div class="flex items-center gap-4">
-                                <div class="example-grid" id="exampleBad"></div>
-                                <span class="text-red-500">❌ Not Allowed</span>
-                                <div class="example-grid" id="exampleGood"></div>
-                                <span class="text-green-500">✓ Allowed</span>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Completion Modal -->
-    <div id="completionModal" class="modal">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold text-green-800 mb-4">🎉 Congratulations!</h2>
-            <p class="text-green-700 mb-4">You've completed the puzzle in <span id="completionTime"></span>!</p>
-            <div class="bg-green-50 p-4 rounded-lg mb-4">
-                <h3 class="font-semibold text-green-800 mb-2">Did You Know?</h3>
-                <p id="funFact" class="text-green-700"></p>
-            </div>
-            <div class="mt-6">
-                <a href="https://www.eagle-grp.com/kian-falcon-manufacturing-llp/" 
-                   target="_blank" 
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors">
-                    Learn More About KIAN Falcon
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                </a>
-            </div>
+        <!-- Instructions -->
+        <div class="bg-white p-4 rounded-lg shadow-md text-sm">
+            <h2 class="font-bold text-indigo-900 mb-2">How to Play</h2>
+            <ul class="space-y-2 text-indigo-700">
+                <li>• Click cells to cycle: empty → 🪑 → 🌿</li>
+                <li>• Each row/column needs equal 🪑 and 🌿</li>
+                <li>• Maximum two same symbols can be adjacent</li>
+                <li>• Follow the symbols between cells: = (same) × (different)</li>
+            </ul>
         </div>
     </div>
 
     <script>
-        // Game constants and state setup
-        const EMPTY = 0;
-        const CHAIR = 1;
-        const ECO = 2;
-
-        const SUSTAINABILITY_FACTS = [
-            "KIAN's sustainable manufacturing processes save over 1000 trees annually!",
-            "Our furniture is designed with a focus on sustainability and longevity.",
-            "KIAN has reduced its carbon footprint by 30% in the last five years."
-        ];
-
-        // Grid configuration
+        // Game constants and state
+        const EMPTY = 0, CHAIR = 1, ECO = 2;
         let grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
         let timer = 0;
         let timerInterval = null;
+        let isGameActive = false;
 
-        // Hint system
-        function generateHint() {
-            // Check for three in a row
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 2; j++) {
-                    // Horizontal check
-                    if (grid[i][j] !== EMPTY && 
-                        grid[i][j] === grid[i][j+1] && 
-                        grid[i][j] === grid[i][j+2]) {
-                        highlightCells([[i,j], [i,j+1], [i,j+2]]);
-                        return `Three ${grid[i][j] === CHAIR ? 'chairs' : 'sustainability symbols'} in a row detected. 
-                               One of the highlighted cells must be changed to the opposite symbol.`;
-                    }
-                }
-            }
-            return "Look for patterns and remember the rules!";
-        }
-
-        function highlightCells(cells) {
-            // Clear previous highlights
-            document.querySelectorAll('.cell').forEach(cell => 
-                cell.classList.remove('highlighted'));
-            
-            // Add new highlights
-            cells.forEach(([row, col]) => {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.classList.add('highlighted');
-            });
-        }
-
-        function showCompletionModal() {
-            const modal = document.getElementById('completionModal');
-            document.getElementById('completionTime').textContent = formatTime(timer);
-            document.getElementById('funFact').textContent = 
-                SUSTAINABILITY_FACTS[Math.floor(Math.random() * SUSTAINABILITY_FACTS.length)];
-            modal.style.display = 'block';
-        }
-
-        function showMessage(message, type = 'info') {
-            const messageArea = document.getElementById('messageArea');
-            messageArea.innerHTML = `
-                <div class="p-4 rounded-lg ${type === 'success' ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'} shadow-md">
-                    <p class="${type === 'success' ? 'text-green-800' : 'text-amber-800'}">${message}</p>
-                </div>
-            `;
-            if (type !== 'success') {
-                setTimeout(() => messageArea.innerHTML = '', 3000);
-            }
-        }
-
-        // Event Handlers
-        document.getElementById('doneBtn').addEventListener('click', () => {
-            if (checkCompletion()) {
-                showCompletionModal();
-            } else {
-                showMessage("There are still some issues. Try using the hint button for help!", "error");
-            }
-        });
-
-        document.getElementById('hintBtn').addEventListener('click', () => {
-            const hint = generateHint();
-            showMessage(hint);
-        });
-
-        // Puzzle configuration
         const horizontalConstraints = [
             [null, '=', null, null],
             [null, 'X', null, null],
@@ -270,100 +107,62 @@
             [null, null, null, null]
         ];
 
-        const verticalConstraints = [
-            [null, null, 'X', null],
-            [null, '=', null, null],
-            [null, null, null, null],
-            [null, null, null, null]
-        ];
-
-        function initializePuzzle() {
-            const puzzleGrid = document.getElementById('puzzleGrid');
-            puzzleGrid.innerHTML = '';
-
-            for (let i = 0; i < 4; i++) {
-                // Add vertical constraints
-                if (i > 0) {
-                    const constraintRow = document.createElement('div');
-                    constraintRow.className = 'flex';
-                    for (let j = 0; j < 4; j++) {
-                        const constraintCell = document.createElement('div');
-                        constraintCell.className = 'w-20 flex justify-center h-6';
-                        if (verticalConstraints[i-1][j]) {
-                            constraintCell.innerHTML = `
-                                <div class="constraint ${verticalConstraints[i-1][j] === '=' ? 'text-green-600' : 'text-red-600'}">
-                                    ${verticalConstraints[i-1][j]}
-                                </div>
-                            `;
-                        }
-                        constraintRow.appendChild(constraintCell);
-                    }
-                    puzzleGrid.appendChild(constraintRow);
-                }
-
-                // Create grid row
-                const row = document.createElement('div');
-                row.className = 'flex';
-                
-                for (let j = 0; j < 4; j++) {
-                    // Create cell
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    cell.addEventListener('click', () => cycleCell(i, j));
-                    row.appendChild(cell);
-
-                    // Add horizontal constraints
-                    if (j < 3 && horizontalConstraints[i][j]) {
-                        const constraint = document.createElement('div');
-                        constraint.className = `constraint ${horizontalConstraints[i][j] === '=' ? 'text-green-600' : 'text-red-600'} w-6`;
-                        constraint.textContent = horizontalConstraints[i][j];
-                        row.appendChild(constraint);
-                    }
-                }
-                puzzleGrid.appendChild(row);
+        // Timer functions
+        function startTimer() {
+            if (!isGameActive) {
+                isGameActive = true;
+                timerInterval = setInterval(() => {
+                    timer++;
+                    updateTimerDisplay();
+                }, 1000);
             }
         }
 
-        function cycleCell(row, col) {
-            grid[row][col] = (grid[row][col] + 1) % 3;
-            updateCell(row, col);
-            startTimer();
-            validateGrid();
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
 
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isGameActive = false;
+        }
+
+        function resetTimer() {
+            stopTimer();
+            timer = 0;
+            updateTimerDisplay();
+        }
+
+        // Grid helpers
         function updateCell(row, col) {
             const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
             cell.textContent = grid[row][col] === CHAIR ? '🪑' : grid[row][col] === ECO ? '🌿' : '';
         }
 
         function validateGrid() {
-            let isValid = true;
+            clearHighlights();
             const errors = [];
+            let errorMessage = '';
 
-            // Check horizontal adjacency
+            // Check horizontal three-in-a-row
             for (let i = 0; i < 4; i++) {
                 for (let j = 0; j < 2; j++) {
                     if (grid[i][j] !== EMPTY && 
                         grid[i][j] === grid[i][j+1] && 
                         grid[i][j] === grid[i][j+2]) {
                         errors.push([i,j], [i,j+1], [i,j+2]);
-                        isValid = false;
+                        errorMessage = `Three ${grid[i][j] === CHAIR ? '🪑' : '🌿'} in a row detected.
+                                      Change one to a ${grid[i][j] === CHAIR ? '🌿' : '🪑'}`;
                     }
                 }
             }
 
-            // Check vertical adjacency
-            for (let i = 0; i < 2; i++) {
-                for (let j = 0; j < 4; j++) {
-                    if (grid[i][j] !== EMPTY && 
-                        grid[i][j] === grid[i+1][j] && 
-                        grid[i][j] === grid[i+2][j]) {
-                        errors.push([i,j], [i+1,j], [i+2,j]);
-                        isValid = false;
-                    }
-                }
+            if (errors.length > 0) {
+                highlightCells(errors, 'error');
+                return { valid: false, message: errorMessage };
             }
 
             // Check constraints
@@ -376,51 +175,114 @@
                             if ((horizontalConstraints[i][j] === '=' && cell1 !== cell2) ||
                                 (horizontalConstraints[i][j] === 'X' && cell1 === cell2)) {
                                 errors.push([i,j], [i,j+1]);
-                                isValid = false;
+                                errorMessage = horizontalConstraints[i][j] === '=' ? 
+                                    'These cells must match' : 'These cells must be different';
                             }
                         }
                     }
                 }
             }
 
-            // Highlight errors
+            if (errors.length > 0) {
+                highlightCells(errors, 'error');
+                return { valid: false, message: errorMessage };
+            }
+
+            return { valid: true };
+        }
+
+        function clearHighlights() {
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('error');
+                cell.classList.remove('error', 'highlighted');
             });
-            errors.forEach(([row, col]) => {
+        }
+
+        function highlightCells(cells, type = 'highlighted') {
+            cells.forEach(([row, col]) => {
                 const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.classList.add('error');
+                cell.classList.add(type);
             });
-
-            return isValid;
         }
 
-        function checkCompletion() {
-            // Check if all cells are filled
-            const isFilled = grid.every(row => row.every(cell => cell !== EMPTY));
-            if (!isFilled) return false;
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `
+                <div class="p-3 rounded-lg ${type === 'success' ? 'bg-green-50' : 'bg-amber-50'} 
+                     ${type === 'success' ? 'text-green-800' : 'text-amber-800'}">
+                    ${message}
+                </div>
+            `;
+        }
 
-            // Check if grid is valid
-            if (!validateGrid()) return false;
+        function cycleCell(row, col) {
+            if (!isGameActive) {
+                startTimer();
+            }
+            grid[row][col] = (grid[row][col] + 1) % 3;
+            updateCell(row, col);
+            const validation = validateGrid();
+            if (!validation.valid) {
+                showMessage(validation.message);
+            }
+        }
 
-            // Check row balance
+        // Initialize puzzle grid
+        function initializePuzzle() {
+            const puzzleGrid = document.getElementById('puzzleGrid');
+            puzzleGrid.innerHTML = '';
+
             for (let i = 0; i < 4; i++) {
-                const rowChairs = grid[i].filter(cell => cell === CHAIR).length;
-                const rowEco = grid[i].filter(cell => cell === ECO).length;
-                if (rowChairs !== rowEco) return false;
-            }
+                const row = document.createElement('div');
+                row.className = 'flex';
+                
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => cycleCell(i, j));
+                    row.appendChild(cell);
 
-            // Check column balance
-            for (let j = 0; j < 4; j++) {
-                const colChairs = grid.map(row => row[j]).filter(cell => cell === CHAIR).length;
-                const colEco = grid.map(row => row[j]).filter(cell => cell === ECO).length;
-                if (colChairs !== colEco) return false;
+                    if (j < 3 && horizontalConstraints[i][j]) {
+                        const constraint = document.createElement('div');
+                        constraint.className = 'constraint';
+                        constraint.textContent = horizontalConstraints[i][j];
+                        row.appendChild(constraint);
+                    }
+                }
+                puzzleGrid.appendChild(row);
             }
-
-            return true;
         }
 
-        // Initialize the puzzle
+        // Event listeners
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
+            initializePuzzle();
+            resetTimer();
+            clearHighlights();
+            document.getElementById('messageArea').innerHTML = '';
+        });
+
+        document.getElementById('doneBtn').addEventListener('click', () => {
+            const validation = validateGrid();
+            if (validation.valid) {
+                stopTimer();
+                showMessage('Congratulations! 🎉 Puzzle completed successfully!', 'success');
+            } else {
+                showMessage(validation.message || 'Not quite right. Check the highlighted cells.');
+            }
+        });
+
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            const validation = validateGrid();
+            if (!validation.valid) {
+                showMessage(validation.message);
+            } else {
+                showMessage('Looking good! Keep going!');
+            }
+        });
+
+        // Initialize the game
         initializePuzzle();
     </script>
 </body>
