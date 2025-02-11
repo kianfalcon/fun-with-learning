@@ -55,9 +55,9 @@
     function addConstraints() {
         const constraints = [
     [null, '=', null, null],
+    [null, null, '×', null],
     ['×', null, null, null],
-    [null, null, '=', null],
-    [null, null, null, '×']
+    [null, null, '=', null]
 ];
         
         document.querySelectorAll('.cell').forEach(cell => {
@@ -426,6 +426,96 @@
     document.getElementById('resetBtn').addEventListener('click', initializeGrid);
     document.getElementById('checkBtn').addEventListener('click', checkPuzzle);
     document.getElementById('hintBtn').addEventListener('click', provideHint);
+    document.addEventListener('DOMContentLoaded', initializeGrid);
+</script>
+<script>
+    const constraints = [
+        [null, '=', null, '×'],
+        ['×', null, '=', null],
+        [null, '=', null, '×'],
+        ['×', null, '=', null]
+    ];
+    
+    function initializeGrid() {
+        const puzzleGrid = document.getElementById('puzzleGrid');
+        puzzleGrid.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.addEventListener('click', () => cycleCell(cell));
+                puzzleGrid.appendChild(cell);
+                
+                if (j < 3 && constraints[i][j]) {
+                    const hConstraint = document.createElement('div');
+                    hConstraint.className = 'constraint horizontal';
+                    hConstraint.textContent = constraints[i][j];
+                    cell.appendChild(hConstraint);
+                }
+                if (i < 3 && constraints[i][j]) {
+                    const vConstraint = document.createElement('div');
+                    vConstraint.className = 'constraint vertical';
+                    vConstraint.textContent = constraints[i][j];
+                    cell.appendChild(vConstraint);
+                }
+            }
+        }
+    }
+
+    function cycleCell(cell) {
+        const symbols = ['', '🪑', '🌿'];
+        let current = symbols.indexOf(cell.textContent);
+        cell.textContent = symbols[(current + 1) % symbols.length];
+        validateGrid();
+    }
+
+    function validateGrid() {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.style.display = 'none';
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+        
+        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+        document.querySelectorAll('.cell').forEach(cell => {
+            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+        });
+        
+        let errorFound = false;
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                    errorMessage.textContent = 'Rule violated: No three identical symbols in a row or column.';
+                    errorMessage.style.display = 'block';
+                    errorFound = true;
+                }
+            }
+        }
+        document.getElementById('checkBtn').disabled = errorFound;
+    }
+
+    function highlightMistakes() {
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+        
+        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+        document.querySelectorAll('.cell').forEach(cell => {
+            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+        });
+        
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
+                }
+            }
+        }
+    }
+    
+    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
+    document.getElementById('checkBtn').addEventListener('click', validateGrid);
+    document.getElementById('hintBtn').addEventListener('click', highlightMistakes);
     document.addEventListener('DOMContentLoaded', initializeGrid);
 </script>
 </body>
