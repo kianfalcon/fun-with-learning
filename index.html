@@ -6,284 +6,137 @@
     <title>KIAN Balance Puzzle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            width: 300px;
+            height: 300px;
+            border: 3px solid black;
+            position: relative;
+        }
         .cell {
-            width: 60px;
-            height: 60px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid black;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.75rem;
+            font-size: 1.5rem;
             cursor: pointer;
             transition: all 0.2s ease;
+            background: white;
+            position: relative;
         }
-
-        .cell:hover {
-            background-color: #f3f4f6;
-        }
-
-        .cell.highlighted {
-            border: 2px solid #f59e0b;
-            background-color: #fef3c7;
-            animation: pulse 1.5s infinite;
-        }
-
         .cell.error {
-            border: 2px solid #ef4444;
             background-color: #fee2e2;
         }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
         .constraint {
-            width: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: absolute;
+            font-size: 1.2rem;
             font-weight: bold;
-            color: #4f46e5;
+            color: red;
+        }
+        .horizontal {
+            top: 50%;
+            left: 100%;
+            transform: translate(-50%, -50%);
+        }
+        .vertical {
+            top: 100%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #error-message {
+            display: none;
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
         }
     </style>
 </head>
 <body class="bg-gradient-to-b from-indigo-50 to-white min-h-screen py-6">
     <div class="container mx-auto px-4 max-w-lg">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-indigo-900">Balance & Harmony</h1>
-            <p class="text-indigo-600 text-sm">Place chairs and leaves to create balance</p>
+        <div class="text-center mb-4">
+            <h1 class="text-3xl font-bold"><span class="text-black">KIAN</span> <span class="text-red-600">Falcon</span></h1>
+            <p class="text-black mt-2">Learning Made Fun, Accessible, and Sustainable</p>
         </div>
-
-        <!-- Puzzle Grid Container -->
-        <div class="bg-white p-6 rounded-lg shadow-lg mb-4">
-            <div id="puzzleGrid" class="flex flex-col items-center"></div>
-        </div>
-
-        <!-- Controls -->
-        <div class="flex flex-wrap justify-center gap-3 mb-4">
-            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded shadow-md">
-                ⏱️ <span id="timer" class="font-mono">0:00</span>
+        
+        <div id="error-message" class="w-full"></div>
+        
+        <div class="flex flex-col items-center gap-4 mt-4">
+            <div class="bg-indigo-50 p-4 rounded-xl shadow-lg w-full flex flex-col items-center">
+                <div id="puzzleGrid" class="grid-container"></div>
+                <div class="flex gap-4 mt-4">
+                    <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">💡 Hint</button>
+                    <button id="resetBtn" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">🔄 Reset</button>
+                    <button id="checkBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">✓ Check</button>
+                </div>
             </div>
-            <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors">
-                💡 Hint
-            </button>
-            <button id="clearBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
-                🔄 Clear
-            </button>
-            <button id="doneBtn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
-                ✓ Done
-            </button>
         </div>
 
-        <!-- Message Area -->
-        <div id="messageArea" class="mb-4"></div>
-
-        <!-- Instructions -->
-        <div class="bg-white p-4 rounded-lg shadow-md text-sm">
-            <h2 class="font-bold text-indigo-900 mb-2">How to Play</h2>
-            <ul class="space-y-2 text-indigo-700">
-                <li>• Click cells to cycle: empty → 🪑 → 🌿</li>
-                <li>• Each row/column needs equal 🪑 and 🌿</li>
-                <li>• Maximum two same symbols can be adjacent</li>
-                <li>• Follow the symbols between cells: = (same) × (different)</li>
-            </ul>
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full space-y-4 mt-6">
+            <h2 class="font-bold text-lg text-indigo-900 border-b pb-2">How to Play</h2>
+            <div class="grid grid-cols-1 gap-2">
+                <div class="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
+                    <div class="cell"></div>
+                    <div class="cell">🪑</div>
+                    <div class="cell">🌿</div>
+                    <p class="text-indigo-700 text-sm">Click to cycle through: Empty → Chair → Leaf</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                    <div class="cell">🪑</div>
+                    <div class="cell">🌿</div>
+                    <div class="cell">🪑</div>
+                    <div class="cell">🌿</div>
+                    <p class="text-green-700 text-sm">Each row and column must contain equal numbers of chairs and leaves</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
+                    <div class="cell">🪑</div>
+                    <div class="cell">🪑</div>
+                    <div class="cell">🪑</div>
+                    <p class="text-red-700 text-sm">No three identical symbols can be adjacent</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                    <div class="cell">🪑</div>
+                    <span class="text-blue-600 font-bold">=</span>
+                    <div class="cell">🪑</div>
+                    <p class="text-blue-700 text-sm">'=' means symbols must match</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg">
+                    <div class="cell">🪑</div>
+                    <span class="text-red-600 font-bold">×</span>
+                    <div class="cell">🌿</div>
+                    <p class="text-red-700 text-sm">'×' means symbols must be different</p>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        // Game constants and state
-        const EMPTY = 0, CHAIR = 1, ECO = 2;
-        let grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
-        let timer = 0;
-        let timerInterval = null;
-        let isGameActive = false;
-
-        const horizontalConstraints = [
-            [null, '=', null, null],
-            [null, 'X', null, null],
-            [null, null, '=', null],
-            [null, null, null, null]
-        ];
-
-        // Timer functions
-        function startTimer() {
-            if (!isGameActive) {
-                isGameActive = true;
-                timerInterval = setInterval(() => {
-                    timer++;
-                    updateTimerDisplay();
-                }, 1000);
+<script>
+    function initializeGrid() {
+        const puzzleGrid = document.getElementById('puzzleGrid');
+        puzzleGrid.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.addEventListener('click', () => cycleCell(cell));
+                puzzleGrid.appendChild(cell);
             }
         }
+    }
 
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timer / 60);
-            const seconds = timer % 60;
-            document.getElementById('timer').textContent = 
-                `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
+    function cycleCell(cell) {
+        const symbols = ['', '🪑', '🌿'];
+        let current = symbols.indexOf(cell.textContent);
+        cell.textContent = symbols[(current + 1) % symbols.length];
+    }
 
-        function stopTimer() {
-            clearInterval(timerInterval);
-            isGameActive = false;
-        }
-
-        function resetTimer() {
-            stopTimer();
-            timer = 0;
-            updateTimerDisplay();
-        }
-
-        // Grid helpers
-        function updateCell(row, col) {
-            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-            cell.textContent = grid[row][col] === CHAIR ? '🪑' : grid[row][col] === ECO ? '🌿' : '';
-        }
-
-        function validateGrid() {
-            clearHighlights();
-            const errors = [];
-            let errorMessage = '';
-
-            // Check horizontal three-in-a-row
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 2; j++) {
-                    if (grid[i][j] !== EMPTY && 
-                        grid[i][j] === grid[i][j+1] && 
-                        grid[i][j] === grid[i][j+2]) {
-                        errors.push([i,j], [i,j+1], [i,j+2]);
-                        errorMessage = `Three ${grid[i][j] === CHAIR ? '🪑' : '🌿'} in a row detected.
-                                      Change one to a ${grid[i][j] === CHAIR ? '🌿' : '🪑'}`;
-                    }
-                }
-            }
-
-            if (errors.length > 0) {
-                highlightCells(errors, 'error');
-                return { valid: false, message: errorMessage };
-            }
-
-            // Check constraints
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 3; j++) {
-                    if (horizontalConstraints[i][j]) {
-                        const cell1 = grid[i][j];
-                        const cell2 = grid[i][j+1];
-                        if (cell1 !== EMPTY && cell2 !== EMPTY) {
-                            if ((horizontalConstraints[i][j] === '=' && cell1 !== cell2) ||
-                                (horizontalConstraints[i][j] === 'X' && cell1 === cell2)) {
-                                errors.push([i,j], [i,j+1]);
-                                errorMessage = horizontalConstraints[i][j] === '=' ? 
-                                    'These cells must match' : 'These cells must be different';
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (errors.length > 0) {
-                highlightCells(errors, 'error');
-                return { valid: false, message: errorMessage };
-            }
-
-            return { valid: true };
-        }
-
-        function clearHighlights() {
-            document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('error', 'highlighted');
-            });
-        }
-
-        function highlightCells(cells, type = 'highlighted') {
-            cells.forEach(([row, col]) => {
-                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                cell.classList.add(type);
-            });
-        }
-
-        function showMessage(message, type = 'info') {
-            const messageArea = document.getElementById('messageArea');
-            messageArea.innerHTML = `
-                <div class="p-3 rounded-lg ${type === 'success' ? 'bg-green-50' : 'bg-amber-50'} 
-                     ${type === 'success' ? 'text-green-800' : 'text-amber-800'}">
-                    ${message}
-                </div>
-            `;
-        }
-
-        function cycleCell(row, col) {
-            if (!isGameActive) {
-                startTimer();
-            }
-            grid[row][col] = (grid[row][col] + 1) % 3;
-            updateCell(row, col);
-            const validation = validateGrid();
-            if (!validation.valid) {
-                showMessage(validation.message);
-            }
-        }
-
-        // Initialize puzzle grid
-        function initializePuzzle() {
-            const puzzleGrid = document.getElementById('puzzleGrid');
-            puzzleGrid.innerHTML = '';
-
-            for (let i = 0; i < 4; i++) {
-                const row = document.createElement('div');
-                row.className = 'flex';
-                
-                for (let j = 0; j < 4; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    cell.addEventListener('click', () => cycleCell(i, j));
-                    row.appendChild(cell);
-
-                    if (j < 3 && horizontalConstraints[i][j]) {
-                        const constraint = document.createElement('div');
-                        constraint.className = 'constraint';
-                        constraint.textContent = horizontalConstraints[i][j];
-                        row.appendChild(constraint);
-                    }
-                }
-                puzzleGrid.appendChild(row);
-            }
-        }
-
-        // Event listeners
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
-            initializePuzzle();
-            resetTimer();
-            clearHighlights();
-            document.getElementById('messageArea').innerHTML = '';
-        });
-
-        document.getElementById('doneBtn').addEventListener('click', () => {
-            const validation = validateGrid();
-            if (validation.valid) {
-                stopTimer();
-                showMessage('Congratulations! 🎉 Puzzle completed successfully!', 'success');
-            } else {
-                showMessage(validation.message || 'Not quite right. Check the highlighted cells.');
-            }
-        });
-
-        document.getElementById('hintBtn').addEventListener('click', () => {
-            const validation = validateGrid();
-            if (!validation.valid) {
-                showMessage(validation.message);
-            } else {
-                showMessage('Looking good! Keep going!');
-            }
-        });
-
-        // Initialize the game
-        initializePuzzle();
-    </script>
+    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
+    document.addEventListener('DOMContentLoaded', initializeGrid);
+</script>
 </body>
 </html>
