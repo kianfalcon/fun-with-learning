@@ -14,9 +14,11 @@
             height: 300px;
             border: 3px solid black;
             position: relative;
+            gap: 1px;
+            background: #ddd;
         }
         .cell {
-            border: 1px solid black;
+            border: 1px solid #ccc;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -25,6 +27,10 @@
             transition: all 0.2s ease;
             background: white;
             position: relative;
+            min-height: 70px;
+        }
+        .cell:hover {
+            background: #f0f0f0;
         }
         .cell.error {
             background-color: #fee2e2;
@@ -34,16 +40,17 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: red;
+            z-index: 10;
         }
         .horizontal {
+            right: -12px;
             top: 50%;
-            left: 100%;
-            transform: translate(-50%, -50%);
+            transform: translateY(-50%);
         }
         .vertical {
-            top: 100%;
+            bottom: -12px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
         }
         #error-message {
             display: none;
@@ -53,6 +60,7 @@
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -66,12 +74,18 @@
         <div id="error-message" class="w-full"></div>
         
         <div class="flex flex-col items-center gap-4 mt-4">
-            <div class="bg-indigo-50 p-4 rounded-xl shadow-lg w-full flex flex-col items-center">
-                <div id="puzzleGrid" class="grid-container"></div>
+            <div class="bg-indigo-50 p-6 rounded-xl shadow-lg w-full flex flex-col items-center">
+                <div id="puzzleGrid" class="grid-container mb-4"></div>
                 <div class="flex gap-4 mt-4">
-                    <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">💡 Hint</button>
-                    <button id="resetBtn" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">🔄 Reset</button>
-                    <button id="checkBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">✓ Check</button>
+                    <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">
+                        💡 Hint
+                    </button>
+                    <button id="resetBtn" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        🔄 Reset
+                    </button>
+                    <button id="checkBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                        ✓ Check
+                    </button>
                 </div>
             </div>
         </div>
@@ -80,63 +94,217 @@
             <h2 class="font-bold text-lg text-indigo-900 border-b pb-2">How to Play</h2>
             <div class="grid grid-cols-1 gap-2">
                 <div class="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
-                    <div class="cell"></div>
-                    <div class="cell">🪑</div>
-                    <div class="cell">🌿</div>
+                    <div class="w-10 h-10 border flex items-center justify-center"></div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🌿</div>
                     <p class="text-indigo-700 text-sm">Click to cycle through: Empty → Chair → Leaf</p>
                 </div>
                 <div class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-                    <div class="cell">🪑</div>
-                    <div class="cell">🌿</div>
-                    <div class="cell">🪑</div>
-                    <div class="cell">🌿</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🌿</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🌿</div>
                     <p class="text-green-700 text-sm">Each row and column must contain equal numbers of chairs and leaves</p>
                 </div>
                 <div class="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
-                    <div class="cell">🪑</div>
-                    <div class="cell">🪑</div>
-                    <div class="cell">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
                     <p class="text-red-700 text-sm">No three identical symbols can be adjacent</p>
                 </div>
                 <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                    <div class="cell">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
                     <span class="text-blue-600 font-bold">=</span>
-                    <div class="cell">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
                     <p class="text-blue-700 text-sm">'=' means symbols must match</p>
                 </div>
                 <div class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg">
-                    <div class="cell">🪑</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🪑</div>
                     <span class="text-red-600 font-bold">×</span>
-                    <div class="cell">🌿</div>
+                    <div class="w-10 h-10 border flex items-center justify-center">🌿</div>
                     <p class="text-red-700 text-sm">'×' means symbols must be different</p>
                 </div>
             </div>
         </div>
     </div>
-<script>
-    function initializeGrid() {
-        const puzzleGrid = document.getElementById('puzzleGrid');
-        puzzleGrid.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.addEventListener('click', () => cycleCell(cell));
-                puzzleGrid.appendChild(cell);
+
+    <script>
+        // Game state
+        const EMPTY = 0, CHAIR = 1, LEAF = 2;
+        let grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
+
+        // Define constraints
+        const constraints = [
+            { row: 0, col: 1, type: '=' },  // Row 1, between columns 1 and 2
+            { row: 1, col: 1, type: 'X' },  // Row 2, between columns 1 and 2
+            { row: 2, col: 2, type: '=' }   // Row 3, between columns 2 and 3
+        ];
+
+        function initializeGrid() {
+            const puzzleGrid = document.getElementById('puzzleGrid');
+            puzzleGrid.innerHTML = '';
+            
+            // Create cells and add constraints
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => cycleCell(cell));
+                    puzzleGrid.appendChild(cell);
+
+                    // Add constraint symbols
+                    const constraint = constraints.find(c => c.row === i && c.col === j);
+                    if (constraint) {
+                        const constraintEl = document.createElement('div');
+                        constraintEl.className = 'constraint horizontal';
+                        constraintEl.textContent = constraint.type;
+                        cell.appendChild(constraintEl);
+                    }
+                }
             }
         }
-    }
 
-    function cycleCell(cell) {
-        const symbols = ['', '🪑', '🌿'];
-        let current = symbols.indexOf(cell.textContent);
-        cell.textContent = symbols[(current + 1) % symbols.length];
-    }
+        function cycleCell(cell) {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            const symbols = ['', '🪑', '🌿'];
+            let current = symbols.indexOf(cell.textContent);
+            
+            grid[row][col] = (current + 1) % 3;
+            cell.textContent = symbols[(current + 1) % 3];
 
-    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
-    document.addEventListener('DOMContentLoaded', initializeGrid);
-</script>
+            // Re-add constraint if it exists
+            const constraint = constraints.find(c => c.row === row && c.col === col);
+            if (constraint) {
+                const constraintEl = document.createElement('div');
+                constraintEl.className = 'constraint horizontal';
+                constraintEl.textContent = constraint.type;
+                cell.appendChild(constraintEl);
+            }
+
+            checkErrors();
+        }
+
+        function checkErrors() {
+            // Clear previous errors
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.style.display = 'none';
+
+            // Check constraint violations
+            for (const { row, col, type } of constraints) {
+                const cell1 = grid[row][col];
+                const cell2 = grid[row][col + 1];
+                
+                if (cell1 !== EMPTY && cell2 !== EMPTY) {
+                    if ((type === '=' && cell1 !== cell2) || 
+                        (type === 'X' && cell1 === cell2)) {
+                        const cells = [
+                            document.querySelector(`[data-row="${row}"][data-col="${col}"]`),
+                            document.querySelector(`[data-row="${row}"][data-col="${col + 1}"]`)
+                        ];
+                        cells.forEach(cell => cell.classList.add('error'));
+                        errorMessage.textContent = type === '=' ? 
+                            'These cells must contain the same symbol' : 
+                            'These cells must contain different symbols';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                }
+            }
+
+            // Check for three in a row
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 2; j++) {
+                    if (grid[i][j] !== EMPTY && 
+                        grid[i][j] === grid[i][j+1] && 
+                        grid[i][j] === grid[i][j+2]) {
+                        [j, j+1, j+2].forEach(col => {
+                            document.querySelector(`[data-row="${i}"][data-col="${col}"]`)
+                                .classList.add('error');
+                        });
+                        errorMessage.textContent = "No three identical symbols can be adjacent";
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                }
+            }
+        }
+
+        function getHint() {
+            // Clear previous errors
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+            
+            // Check constraint violations
+            for (const { row, col, type } of constraints) {
+                const cell1 = grid[row][col];
+                const cell2 = grid[row][col + 1];
+                
+                if (cell1 !== EMPTY && cell2 !== EMPTY) {
+                    if ((type === '=' && cell1 !== cell2) || 
+                        (type === 'X' && cell1 === cell2)) {
+                        const cells = [
+                            document.querySelector(`[data-row="${row}"][data-col="${col}"]`),
+                            document.querySelector(`[data-row="${row}"][data-col="${col + 1}"]`)
+                        ];
+                        cells.forEach(cell => cell.classList.add('error'));
+                        const message = type === '=' ?
+                            `These cells must match. Change one to match the other.` :
+                            `These cells must be different. Change one to the opposite symbol.`;
+                        document.getElementById('error-message').textContent = message;
+                        document.getElementById('error-message').style.display = 'block';
+                        return;
+                    }
+                }
+            }
+
+            // Check for three in a row
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 2; j++) {
+                    if (grid[i][j] !== EMPTY && 
+                        grid[i][j] === grid[i][j+1] && 
+                        grid[i][j] === grid[i][j+2]) {
+                        [j, j+1, j+2].forEach(col => {
+                            document.querySelector(`[data-row="${i}"][data-col="${col}"]`)
+                                .classList.add('error');
+                        });
+                        const symbol = grid[i][j] === CHAIR ? '🪑' : '🌿';
+                        const opposite = grid[i][j] === CHAIR ? '🌿' : '🪑';
+                        document.getElementById('error-message').textContent = 
+                            `Found three ${symbol} in a row. Change one to ${opposite} to fix this.`;
+                        document.getElementById('error-message').style.display = 'block';
+                        return;
+                    }
+                }
+            }
+
+            document.getElementById('error-message').textContent = "Looking good! Keep going!";
+            document.getElementById('error-message').style.display = 'block';
+        }
+
+        // Event listeners
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            grid = Array(4).fill().map(() => Array(4).fill(EMPTY));
+            initializeGrid();
+            document.getElementById('error-message').style.display = 'none';
+        });
+
+        document.getElementById('hintBtn').addEventListener('click', getHint);
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            if (!grid.every(row => row.every(cell => cell !== EMPTY))) {
+                document.getElementById('error-message').textContent = "Fill all cells before checking!";
+                document.getElementById('error-message').style.display = 'block';
+                return;
+            }
+            getHint();
+        });
+
+        // Initialize the puzzle
+        document.addEventListener('DOMContentLoaded', initializeGrid);
+        initializeGrid();
+    </script>
 </body>
 </html>
