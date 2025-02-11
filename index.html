@@ -1,82 +1,34 @@
-`<script>
-    // Define the constraints
-    const horizontalConstraints = [
-        [null, '=', null, 'X'],  // First row
-        ['X', null, '=', null],  // Second row
-        [null, '=', null, 'X'],  // Third row
-        ['X', null, '=', null]   // Fourth row
-    ];
-
-    const verticalConstraints = [
-        [null, '=', 'X', null],  // First column
-        ['X', null, '=', null],  // Second column
-        [null, '=', null, 'X'],  // Third column
-        ['X', null, '=', null]   // Fourth column
-    ];
-
-    function initializeGrid() {
-        const puzzleGrid = document.getElementById('puzzleGrid');
-        puzzleGrid.innerHTML = '';
-        
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.addEventListener('click', () => cycleCell(cell));
-                
-                // Add horizontal constraints
-                if (j < 3 && horizontalConstraints[i][j]) {
-                    const hConstraint = document.createElement('div');
-                    hConstraint.className = 'constraint horizontal';
-                    hConstraint.style.color = horizontalConstraints[i][j] === '=' ? '#22c55e' : '#3b82f6';
-                    hConstraint.textContent = horizontalConstraints[i][j];
-                    cell.appendChild(hConstraint);
-                }
-                
-                // Add vertical constraints
-                if (i < 3 && verticalConstraints[i][j]) {
-                    const vConstraint = document.createElement('div');
-                    vConstraint.className = 'constraint vertical';
-                    vConstraint.style.color = verticalConstraints[i][j] === '=' ? '#22c55e' : '#3b82f6';
-                    vConstraint.textContent = verticalConstraints[i][j];
-                    cell.appendChild(vConstraint);
-                }
-                
-                puzzleGrid.appendChild(cell);
-            }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIAN Balance Puzzle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            width: 300px;
+            height: 300px;
+            border: 3px solid black;
+            position: relative;
         }
-    }
-
-    function cycleCell(cell) {
-        const symbols = ['', '🪑', '🌿'];
-        let current = symbols.indexOf(cell.textContent);
-        cell.textContent = symbols[(current + 1) % symbols.length];
-        
-        // Re-add constraints if they were overwritten
-        const row = parseInt(cell.dataset.row);
-        const col = parseInt(cell.dataset.col);
-        
-        if (col < 3 && horizontalConstraints[row][col]) {
-            const hConstraint = document.createElement('div');
-            hConstraint.className = 'constraint horizontal';
-            hConstraint.style.color = horizontalConstraints[row][col] === '=' ? '#22c55e' : '#3b82f6';
-            hConstraint.textContent = horizontalConstraints[row][col];
-            cell.appendChild(hConstraint);
+        .cell {
+            border: 1px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            position: relative;
         }
-        
-        if (row < 3 && verticalConstraints[row][col]) {
-            const vConstraint = document.createElement('div');
-            vConstraint.className = 'constraint vertical';
-            vConstraint.style.color = verticalConstraints[row][col] === '=' ? '#22c55e' : '#3b82f6';
-            vConstraint.textContent = verticalConstraints[row][col];
-            cell.appendChild(vConstraint);
+        .cell.error {
+            background-color: #fee2e2;
         }
-    }
-
-    // Add these style updates to your existing styles
-    const additionalStyles = `
         .constraint {
             position: absolute;
             font-size: 1.2rem;
@@ -94,13 +46,148 @@
             left: 50%;
             transform: translateX(-50%);
         }
-    `;
+        #error-message {
+            display: none;
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-indigo-50 to-white min-h-screen py-6">
+    <div class="container mx-auto px-4 max-w-lg">
+        <div class="text-center mb-4">
+            <h1 class="text-3xl font-bold"><span class="text-black">KIAN</span> <span class="text-red-600">Falcon</span></h1>
+            <p class="text-black mt-2">Learning Made Fun, Accessible, and Sustainable</p>
+        </div>
+        
+        <div id="error-message" class="w-full"></div>
+        
+        <div class="flex flex-col items-center gap-4 mt-4">
+            <div class="bg-indigo-50 p-4 rounded-xl shadow-lg w-full flex flex-col items-center">
+                <div id="puzzleGrid" class="grid-container"></div>
+                <div class="flex gap-4 mt-4">
+                    <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">💡 Hint</button>
+                    <button id="resetBtn" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">🔄 Reset</button>
+                    <button id="checkBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">✓ Check</button>
+                </div>
+            </div>
+        </div>
 
-    // Add styles to document
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = additionalStyles;
-    document.head.appendChild(styleSheet);
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full space-y-4 mt-6">
+            <h2 class="font-bold text-lg text-indigo-900 border-b pb-2">How to Play</h2>
+            <div class="grid grid-cols-1 gap-2">
+                <div class="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
+                    <div class="example-cell"></div>
+                    <div class="example-cell">🪑</div>
+                    <div class="example-cell">🌿</div>
+                    <p class="text-indigo-700 text-sm">Click to cycle through: Empty → Chair → Leaf</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                    <div class="example-cell">🪑</div>
+                    <div class="example-cell">🌿</div>
+                    <div class="example-cell">🪑</div>
+                    <div class="example-cell">🌿</div>
+                    <p class="text-green-700 text-sm">Each row and column must contain equal numbers of chairs and leaves</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                    <div class="example-cell">🪑</div>
+                    <span class="text-blue-600 font-bold">=</span>
+                    <div class="example-cell">🪑</div>
+                    <p class="text-blue-700 text-sm">'=' means symbols must match</p>
+                </div>
+                <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                    <div class="example-cell">🪑</div>
+                    <span class="text-blue-600 font-bold">×</span>
+                    <div class="example-cell">🌿</div>
+                    <p class="text-blue-700 text-sm">'×' means symbols must be different</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
-    document.addEventListener('DOMContentLoaded', initializeGrid);
-</script>`
+    <script>
+        // Define the constraints
+        const horizontalConstraints = [
+            [null, '=', null, 'X'],  // First row
+            ['X', null, '=', null],  // Second row
+            [null, '=', null, 'X'],  // Third row
+            ['X', null, '=', null]   // Fourth row
+        ];
+
+        const verticalConstraints = [
+            [null, '=', 'X', null],  // First column
+            ['X', null, '=', null],  // Second column
+            [null, '=', null, 'X'],  // Third column
+            ['X', null, '=', null]   // Fourth column
+        ];
+
+        function initializeGrid() {
+            const puzzleGrid = document.getElementById('puzzleGrid');
+            puzzleGrid.innerHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => cycleCell(cell));
+                    
+                    // Add horizontal constraints
+                    if (j < 3 && horizontalConstraints[i][j]) {
+                        const hConstraint = document.createElement('div');
+                        hConstraint.className = 'constraint horizontal';
+                        hConstraint.style.color = '#3b82f6'; // Always blue
+                        hConstraint.textContent = horizontalConstraints[i][j];
+                        cell.appendChild(hConstraint);
+                    }
+                    
+                    // Add vertical constraints
+                    if (i < 3 && verticalConstraints[i][j]) {
+                        const vConstraint = document.createElement('div');
+                        vConstraint.className = 'constraint vertical';
+                        vConstraint.style.color = '#3b82f6'; // Always blue
+                        vConstraint.textContent = verticalConstraints[i][j];
+                        cell.appendChild(vConstraint);
+                    }
+                    
+                    puzzleGrid.appendChild(cell);
+                }
+            }
+        }
+
+        function cycleCell(cell) {
+            const symbols = ['', '🪑', '🌿'];
+            let current = symbols.indexOf(cell.textContent);
+            cell.textContent = symbols[(current + 1) % symbols.length];
+            
+            // Re-add constraints after updating content
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            if (col < 3 && horizontalConstraints[row][col]) {
+                const hConstraint = document.createElement('div');
+                hConstraint.className = 'constraint horizontal';
+                hConstraint.style.color = '#3b82f6';
+                hConstraint.textContent = horizontalConstraints[row][col];
+                cell.appendChild(hConstraint);
+            }
+            
+            if (row < 3 && verticalConstraints[row][col]) {
+                const vConstraint = document.createElement('div');
+                vConstraint.className = 'constraint vertical';
+                vConstraint.style.color = '#3b82f6';
+                vConstraint.textContent = verticalConstraints[row][col];
+                cell.appendChild(vConstraint);
+            }
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', initializeGrid);
+        document.addEventListener('DOMContentLoaded', initializeGrid);
+    </script>
+</body>
+</html>
