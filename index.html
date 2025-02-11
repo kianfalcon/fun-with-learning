@@ -4,7 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KIAN Balance Puzzle</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">    function validateGrid() {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.style.display = 'none';
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+        
+        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+        document.querySelectorAll('.cell').forEach(cell => {
+            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+        });
+        
+        let errorFound = false;
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                    errorMessage.textContent = 'Rule violated: No three identical symbols in a row or column.';
+                    errorMessage.style.display = 'block';
+                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
+                    errorFound = true;
+                }
+            }
+        }
+        document.getElementById('checkBtn').disabled = errorFound;
+    }
+    
+    function giveHint() {
+        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+        document.querySelectorAll('.cell').forEach(cell => {
+            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+        });
+        
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
+                    alert('Hint: Fix the highlighted mistakes');
+                    return;
+                }
+            }
+        }
+    }
+    
+    document.getElementById('checkBtn').addEventListener('click', validateGrid);
+    document.getElementById('hintBtn').addEventListener('click', giveHint);
+    
+    function addConstraints() {
+        const constraints = [
+    [null, '=', null, null],
+    ['×', null, null, null],
+    [null, null, '=', null],
+    [null, null, null, '×']
+];
+        
+        document.querySelectorAll('.cell').forEach(cell => {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            if (col < 3 && constraints[row][col]) {
+                const hConstraint = document.createElement('div');
+                hConstraint.className = 'constraint horizontal';
+                hConstraint.textContent = constraints[row][col];
+                cell.appendChild(hConstraint);
+            }
+            if (row < 3 && constraints[row][col]) {
+                const vConstraint = document.createElement('div');
+                vConstraint.className = 'constraint vertical';
+                vConstraint.textContent = constraints[row][col];
+                cell.appendChild(vConstraint);
+            }
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeGrid();
+        addConstraints();
+    });
+</script>
     <style>
         .grid-container {
             display: grid;
@@ -33,18 +112,17 @@
             position: absolute;
             font-size: 1.2rem;
             font-weight: bold;
-            pointer-events: none;
-            z-index: 10;
+            color: red;
         }
         .horizontal {
-            right: -12px;
             top: 50%;
-            transform: translateY(-50%);
+            left: 100%;
+            transform: translate(-50%, -50%);
         }
         .vertical {
-            bottom: -12px;
+            top: 100%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
         }
         #error-message {
             display: none;
@@ -54,6 +132,10 @@
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
+        }
+        .constraint.fixed {
+            color: blue;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -77,58 +159,10 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-lg w-full space-y-4 mt-6">
-            <h2 class="font-bold text-lg text-indigo-900 border-b pb-2">How to Play</h2>
-            <div class="grid grid-cols-1 gap-2">
-                <div class="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
-                    <div class="example-cell"></div>
-                    <div class="example-cell">🪑</div>
-                    <div class="example-cell">🌿</div>
-                    <p class="text-indigo-700 text-sm">Click to cycle through: Empty → Chair → Leaf</p>
-                </div>
-                <div class="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-                    <div class="example-cell">🪑</div>
-                    <div class="example-cell">🌿</div>
-                    <div class="example-cell">🪑</div>
-                    <div class="example-cell">🌿</div>
-                    <p class="text-green-700 text-sm">Each row and column must contain equal numbers of chairs and leaves</p>
-                </div>
-                <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                    <div class="example-cell">🪑</div>
-                    <span class="text-blue-600 font-bold">=</span>
-                    <div class="example-cell">🪑</div>
-                    <p class="text-blue-700 text-sm">'=' means symbols must match</p>
-                </div>
-                <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                    <div class="example-cell">🪑</div>
-                    <span class="text-blue-600 font-bold">×</span>
-                    <div class="example-cell">🌿</div>
-                    <p class="text-blue-700 text-sm">'×' means symbols must be different</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Define the constraints
-        const horizontalConstraints = [
-            [null, '=', null, 'X'],  // First row
-            ['X', null, '=', null],  // Second row
-            [null, '=', null, 'X'],  // Third row
-            ['X', null, '=', null]   // Fourth row
-        ];
-
-        const verticalConstraints = [
-            [null, '=', 'X', null],  // First column
-            ['X', null, '=', null],  // Second column
-            [null, '=', null, 'X'],  // Third column
-            ['X', null, '=', null]   // Fourth column
-        ];
-
         function initializeGrid() {
             const puzzleGrid = document.getElementById('puzzleGrid');
             puzzleGrid.innerHTML = '';
-            
             for (let i = 0; i < 4; i++) {
                 for (let j = 0; j < 4; j++) {
                     const cell = document.createElement('div');
@@ -136,25 +170,6 @@
                     cell.dataset.row = i;
                     cell.dataset.col = j;
                     cell.addEventListener('click', () => cycleCell(cell));
-                    
-                    // Add horizontal constraints
-                    if (j < 3 && horizontalConstraints[i][j]) {
-                        const hConstraint = document.createElement('div');
-                        hConstraint.className = 'constraint horizontal';
-                        hConstraint.style.color = '#3b82f6'; // Always blue
-                        hConstraint.textContent = horizontalConstraints[i][j];
-                        cell.appendChild(hConstraint);
-                    }
-                    
-                    // Add vertical constraints
-                    if (i < 3 && verticalConstraints[i][j]) {
-                        const vConstraint = document.createElement('div');
-                        vConstraint.className = 'constraint vertical';
-                        vConstraint.style.color = '#3b82f6'; // Always blue
-                        vConstraint.textContent = verticalConstraints[i][j];
-                        cell.appendChild(vConstraint);
-                    }
-                    
                     puzzleGrid.appendChild(cell);
                 }
             }
@@ -164,30 +179,254 @@
             const symbols = ['', '🪑', '🌿'];
             let current = symbols.indexOf(cell.textContent);
             cell.textContent = symbols[(current + 1) % symbols.length];
+        }
+
+        function hint() {
+            validateGrid();
+            const errors = document.querySelectorAll('.error');
+            if (errors.length > 0) {
+                errors.forEach(errorCell => {
+                    errorCell.textContent = errorCell.textContent === '🪑' ? '🌿' : '🪑';
+                    errorCell.classList.remove('error');
+                });
+            } else {
+                alert('No mistakes found!');
+            }
+        }
+
+        function validateGrid() {
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.style.display = 'none';
+            let errors = [];
             
-            // Re-add constraints after updating content
-            const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.dataset.col);
-            
-            if (col < 3 && horizontalConstraints[row][col]) {
-                const hConstraint = document.createElement('div');
-                hConstraint.className = 'constraint horizontal';
-                hConstraint.style.color = '#3b82f6';
-                hConstraint.textContent = horizontalConstraints[row][col];
-                cell.appendChild(hConstraint);
+            const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+            document.querySelectorAll('.cell').forEach(cell => {
+                grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+            });
+
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 2; j++) {
+                    if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                        errors.push('Three identical symbols in a row.');
+                    }
+                    if (grid[j][i] && grid[j][i] === grid[j+1][i] && grid[j][i] === grid[j+2][i]) {
+                        errors.push('Three identical symbols in a column.');
+                    }
+                }
             }
             
-            if (row < 3 && verticalConstraints[row][col]) {
-                const vConstraint = document.createElement('div');
-                vConstraint.className = 'constraint vertical';
-                vConstraint.style.color = '#3b82f6';
-                vConstraint.textContent = verticalConstraints[row][col];
-                cell.appendChild(vConstraint);
+            if (errors.length > 0) {
+                errorMessage.textContent = errors.join(' ');
+                errorMessage.style.display = 'block';
             }
         }
 
         document.getElementById('resetBtn').addEventListener('click', initializeGrid);
+        document.getElementById('hintBtn').addEventListener('click', hint);
         document.addEventListener('DOMContentLoaded', initializeGrid);
     </script>
+<script>
+    const constraints = [
+        [null, '=', null, '×'],
+        ['×', null, '=', null],
+        [null, '=', null, '×'],
+        ['×', null, '=', null]
+    ];
+
+    function initializeGrid() {
+        const puzzleGrid = document.getElementById('puzzleGrid');
+        puzzleGrid.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.addEventListener('click', () => cycleCell(cell));
+                puzzleGrid.appendChild(cell);
+                
+                if (j < 3 && constraints[i][j]) {
+                    const hConstraint = document.createElement('div');
+                    hConstraint.className = 'constraint horizontal text-blue-600 font-bold pointer-events-none';
+                    hConstraint.textContent = constraints[i][j];
+                    cell.appendChild(hConstraint);
+                }
+                if (i < 3 && constraints[i][j]) {
+                    const vConstraint = document.createElement('div');
+                    vConstraint.className = 'constraint vertical text-red-600 font-bold pointer-events-none';
+                    vConstraint.textContent = constraints[i][j];
+                    cell.appendChild(vConstraint);
+                }
+            }
+        }
+    }
+
+    function cycleCell(cell) {
+        if (cell.querySelector('.constraint')) return; // Prevent changing constraint cells
+        const symbols = ['', '🪑', '🌿'];
+        let current = symbols.indexOf(cell.textContent);
+        cell.textContent = symbols[(current + 1) % symbols.length];
+        validateGrid();
+    }
+
+    function validateGrid() {
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.style.display = 'none';
+        let errors = [];
+        
+        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+        document.querySelectorAll('.cell').forEach(cell => {
+            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+        });
+
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                    errors.push('Three identical symbols in a row.');
+                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
+                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
+                }
+                if (grid[j][i] && grid[j][i] === grid[j+1][i] && grid[j][i] === grid[j+2][i]) {
+                    errors.push('Three identical symbols in a column.');
+                    document.querySelector(`[data-row='${j}'][data-col='${i}']`).classList.add('error');
+                    document.querySelector(`[data-row='${j+1}'][data-col='${i}']`).classList.add('error');
+                    document.querySelector(`[data-row='${j+2}'][data-col='${i}']`).classList.add('error');
+                }
+            }
+        }
+        
+        if (errors.length > 0) {
+            errorMessage.textContent = errors.join(' ');
+            errorMessage.style.display = 'block';
+        }
+    }
+
+    function checkSolution() {
+        validateGrid();
+        if (!document.querySelector('.error')) {
+            alert('🎉 Puzzle solved correctly!');
+        }
+    }
+
+    function hint() {
+        validateGrid();
+        const errorCells = document.querySelectorAll('.error');
+        if (errorCells.length > 0) {
+            errorCells.forEach(cell => {
+                cell.textContent = cell.textContent === '🪑' ? '🌿' : '🪑';
+                cell.classList.remove('error');
+            });
+        } else {
+            alert('No mistakes found!');
+        }
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
+    document.getElementById('checkBtn').addEventListener('click', checkSolution);
+    document.getElementById('hintBtn').addEventListener('click', hint);
+    document.addEventListener('DOMContentLoaded', initializeGrid);
+</script>
+<script>
+    const constraints = [
+        [null, '=', null, '×'],
+        ['×', null, '=', null],
+        [null, '=', null, '×'],
+        ['×', null, '=', null]
+    ];
+
+    function initializeGrid() {
+        const puzzleGrid = document.getElementById('puzzleGrid');
+        puzzleGrid.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.addEventListener('click', () => cycleCell(cell));
+                puzzleGrid.appendChild(cell);
+
+                if (j < 3 && constraints[i][j]) {
+                    const hConstraint = document.createElement('div');
+                    hConstraint.className = 'constraint horizontal text-blue-600';
+                    hConstraint.textContent = constraints[i][j];
+                    cell.appendChild(hConstraint);
+                }
+                if (i < 3 && constraints[i][j]) {
+                    const vConstraint = document.createElement('div');
+                    vConstraint.className = 'constraint vertical text-blue-600';
+                    vConstraint.textContent = constraints[i][j];
+                    cell.appendChild(vConstraint);
+                }
+            }
+        }
+    }
+
+    function cycleCell(cell) {
+        const symbols = ['', '🪑', '🌿'];
+        let current = symbols.indexOf(cell.textContent);
+        cell.textContent = symbols[(current + 1) % symbols.length];
+        validateGrid();
+    }
+
+    function validateGrid() {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.style.display = 'none';
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error', 'correct'));
+        
+        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+        document.querySelectorAll('.cell').forEach(cell => {
+            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
+        });
+        
+        let errorFound = false;
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+                    errorMessage.textContent = 'Rule violated: No three identical symbols in a row or column.';
+                    errorMessage.style.display = 'block';
+                    errorFound = true;
+                }
+            }
+        }
+        document.getElementById('checkBtn').disabled = errorFound;
+    }
+
+    function provideHint() {
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
+        document.getElementById('error-message').textContent = 'Hint: Adjust highlighted cells to follow the rules.';
+        document.getElementById('error-message').style.display = 'block';
+        
+        document.querySelectorAll('.cell').forEach(cell => {
+            if (cell.textContent === '') {
+                cell.classList.add('error');
+            }
+        });
+    }
+
+    function checkPuzzle() {
+        const errorMessage = document.getElementById('error-message');
+        const allCells = document.querySelectorAll('.cell');
+        if ([...allCells].some(cell => cell.textContent === '')) {
+            errorMessage.textContent = 'Error: Complete all cells before checking.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        if (document.getElementById('checkBtn').disabled) {
+            errorMessage.textContent = 'Error: Fix rule violations before checking.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        allCells.forEach(cell => cell.classList.add('correct'));
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
+    document.getElementById('checkBtn').addEventListener('click', checkPuzzle);
+    document.getElementById('hintBtn').addEventListener('click', provideHint);
+    document.addEventListener('DOMContentLoaded', initializeGrid);
+</script>
 </body>
 </html>
