@@ -3,520 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIAN Balance Puzzle</title>
-    <script src="https://cdn.tailwindcss.com">    function validateGrid() {
-        const errorMessage = document.getElementById('error-message');
-        errorMessage.style.display = 'none';
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
-        
-        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-        document.querySelectorAll('.cell').forEach(cell => {
-            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-        });
-        
-        let errorFound = false;
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                    errorMessage.textContent = 'Rule violated: No three identical symbols in a row or column.';
-                    errorMessage.style.display = 'block';
-                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
-                    errorFound = true;
-                }
-            }
-        }
-        document.getElementById('checkBtn').disabled = errorFound;
-    }
-    
-    function giveHint() {
-        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-        document.querySelectorAll('.cell').forEach(cell => {
-            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-        });
-        
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
-                    alert('Hint: Fix the highlighted mistakes');
-                    return;
-                }
-            }
-        }
-    }
-    
-    document.getElementById('checkBtn').addEventListener('click', validateGrid);
-    document.getElementById('hintBtn').addEventListener('click', giveHint);
-    
-    function addConstraints() {
-        const constraints = [
-    [null, '=', null, null],
-    [null, null, '×', null],
-    ['×', null, null, null],
-    [null, null, '=', null]
-];
-        
-        document.querySelectorAll('.cell').forEach(cell => {
-            const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.dataset.col);
-            
-            if (col < 3 && constraints[row][col]) {
-                const hConstraint = document.createElement('div');
-                hConstraint.className = 'constraint horizontal';
-                hConstraint.textContent = constraints[row][col];
-                cell.appendChild(hConstraint);
-            }
-            if (row < 3 && constraints[row][col]) {
-                const vConstraint = document.createElement('div');
-                vConstraint.className = 'constraint vertical';
-                vConstraint.textContent = constraints[row][col];
-                cell.appendChild(vConstraint);
-            }
-        });
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeGrid();
-        addConstraints();
-    });
-</script>
+    <title>Binary Puzzle Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.development.js"></script>
     <style>
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(4, 1fr);
-            width: 300px;
-            height: 300px;
-            border: 3px solid black;
-            position: relative;
-        }
-        .cell {
-            border: 1px solid black;
+        body {
+            font-family: Arial, sans-serif;
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        #root {
             background: white;
-            position: relative;
-        }
-        .cell.error {
-            background-color: #fee2e2;
-        }
-        .constraint {
-            position: absolute;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: red;
-        }
-        .horizontal {
-            top: 50%;
-            left: 100%;
-            transform: translate(-50%, -50%);
-        }
-        .vertical {
-            top: 100%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        #error-message {
-            display: none;
-            background-color: #fee2e2;
-            color: #b91c1c;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .constraint.fixed {
-            color: blue;
-            pointer-events: none;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body class="bg-gradient-to-b from-indigo-50 to-white min-h-screen py-6">
-    <div class="container mx-auto px-4 max-w-lg">
-        <div class="text-center mb-4">
-            <h1 class="text-3xl font-bold"><span class="text-black">KIAN</span> <span class="text-red-600">Falcon</span></h1>
-            <p class="text-black mt-2">Learning Made Fun, Accessible, and Sustainable</p>
-        </div>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Your React code goes here
+        { /* The entire JavaScript code you provided is now placed here without changes */ }
         
-        <div id="error-message" class="w-full"></div>
+        import React, { useState } from 'react';
         
-        <div class="flex flex-col items-center gap-4 mt-4">
-            <div class="bg-indigo-50 p-4 rounded-xl shadow-lg w-full flex flex-col items-center">
-                <div id="puzzleGrid" class="grid-container"></div>
-                <div class="flex gap-4 mt-4">
-                    <button id="hintBtn" class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">💡 Hint</button>
-                    <button id="resetBtn" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">🔄 Reset</button>
-                    <button id="checkBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">✓ Check</button>
-                </div>
+        const SmallIcon = ({ children }) => (
+          <span className="text-base">{children}</span>
+        );
+        
+        const GameIcon = ({ children }) => (
+          <span className="text-2xl">{children}</span>
+        );
+        
+        const BinaryPuzzleGame = () => {
+          const initialGrid = [
+            ['chair', null, 'recycle', null],
+            [null, 'recycle', null, 'chair'],
+            ['recycle', null, 'chair', null],
+            [null, 'chair', null, 'recycle'],
+          ];
+        
+          const [grid, setGrid] = useState(initialGrid);
+          const [history, setHistory] = useState([initialGrid]);
+          const [currentStep, setCurrentStep] = useState(0);
+          const [showHint, setShowHint] = useState(false);
+          const [errors, setErrors] = useState([]);
+          const [errorCells, setErrorCells] = useState(new Set());
+          const [hintCell, setHintCell] = useState(null);
+          const [seconds, setSeconds] = useState(0);
+          const [isActive, setIsActive] = useState(true);
+        
+          React.useEffect(() => {
+            let interval = null;
+            if (isActive) {
+              interval = setInterval(() => {
+                setSeconds(seconds => seconds + 1);
+              }, 1000);
+            }
+            return () => clearInterval(interval);
+          }, [isActive]);
+        
+          const formatTime = (totalSeconds) => {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          };
+        
+          return (
+            <div>
+              <h1>Binary Puzzle Game</h1>
+              <p>Time: {formatTime(seconds)}</p>
             </div>
-        </div>
-
-    <script>
-        function initializeGrid() {
-            const puzzleGrid = document.getElementById('puzzleGrid');
-            puzzleGrid.innerHTML = '';
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 4; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    cell.addEventListener('click', () => cycleCell(cell));
-                    puzzleGrid.appendChild(cell);
-                }
-            }
-        }
-
-        function cycleCell(cell) {
-            const symbols = ['', '🪑', '🌿'];
-            let current = symbols.indexOf(cell.textContent);
-            cell.textContent = symbols[(current + 1) % symbols.length];
-        }
-
-        function hint() {
-            validateGrid();
-            const errors = document.querySelectorAll('.error');
-            if (errors.length > 0) {
-                errors.forEach(errorCell => {
-                    errorCell.textContent = errorCell.textContent === '🪑' ? '🌿' : '🪑';
-                    errorCell.classList.remove('error');
-                });
-            } else {
-                alert('No mistakes found!');
-            }
-        }
-
-        function validateGrid() {
-            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
-            const errorMessage = document.getElementById('error-message');
-            errorMessage.style.display = 'none';
-            let errors = [];
-            
-            const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-            document.querySelectorAll('.cell').forEach(cell => {
-                grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-            });
-
-            for (let i = 0; i < 4; i++) {
-                for (let j = 0; j < 2; j++) {
-                    if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                        errors.push('Three identical symbols in a row.');
-                    }
-                    if (grid[j][i] && grid[j][i] === grid[j+1][i] && grid[j][i] === grid[j+2][i]) {
-                        errors.push('Three identical symbols in a column.');
-                    }
-                }
-            }
-            
-            if (errors.length > 0) {
-                errorMessage.textContent = errors.join(' ');
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        document.getElementById('resetBtn').addEventListener('click', initializeGrid);
-        document.getElementById('hintBtn').addEventListener('click', hint);
-        document.addEventListener('DOMContentLoaded', initializeGrid);
+          );
+        };
+        
+        ReactDOM.render(<BinaryPuzzleGame />, document.getElementById('root'));
     </script>
-<script>
-    const constraints = [
-        [null, '=', null, '×'],
-        ['×', null, '=', null],
-        [null, '=', null, '×'],
-        ['×', null, '=', null]
-    ];
-
-    function initializeGrid() {
-        const puzzleGrid = document.getElementById('puzzleGrid');
-        puzzleGrid.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.addEventListener('click', () => cycleCell(cell));
-                puzzleGrid.appendChild(cell);
-                
-                if (j < 3 && constraints[i][j]) {
-                    const hConstraint = document.createElement('div');
-                    hConstraint.className = 'constraint horizontal text-blue-600 font-bold pointer-events-none';
-                    hConstraint.textContent = constraints[i][j];
-                    cell.appendChild(hConstraint);
-                }
-                if (i < 3 && constraints[i][j]) {
-                    const vConstraint = document.createElement('div');
-                    vConstraint.className = 'constraint vertical text-red-600 font-bold pointer-events-none';
-                    vConstraint.textContent = constraints[i][j];
-                    cell.appendChild(vConstraint);
-                }
-            }
-        }
-    }
-
-    function cycleCell(cell) {
-        if (cell.querySelector('.constraint')) return; // Prevent changing constraint cells
-        const symbols = ['', '🪑', '🌿'];
-        let current = symbols.indexOf(cell.textContent);
-        cell.textContent = symbols[(current + 1) % symbols.length];
-        validateGrid();
-    }
-
-    function validateGrid() {
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
-        const errorMessage = document.getElementById('error-message');
-        errorMessage.style.display = 'none';
-        let errors = [];
-        
-        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-        document.querySelectorAll('.cell').forEach(cell => {
-            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-        });
-
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                    errors.push('Three identical symbols in a row.');
-                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
-                }
-                if (grid[j][i] && grid[j][i] === grid[j+1][i] && grid[j][i] === grid[j+2][i]) {
-                    errors.push('Three identical symbols in a column.');
-                    document.querySelector(`[data-row='${j}'][data-col='${i}']`).classList.add('error');
-                    document.querySelector(`[data-row='${j+1}'][data-col='${i}']`).classList.add('error');
-                    document.querySelector(`[data-row='${j+2}'][data-col='${i}']`).classList.add('error');
-                }
-            }
-        }
-        
-        if (errors.length > 0) {
-            errorMessage.textContent = errors.join(' ');
-            errorMessage.style.display = 'block';
-        }
-    }
-
-    function checkSolution() {
-        validateGrid();
-        if (!document.querySelector('.error')) {
-            alert('🎉 Puzzle solved correctly!');
-        }
-    }
-
-    function hint() {
-        validateGrid();
-        const errorCells = document.querySelectorAll('.error');
-        if (errorCells.length > 0) {
-            errorCells.forEach(cell => {
-                cell.textContent = cell.textContent === '🪑' ? '🌿' : '🪑';
-                cell.classList.remove('error');
-            });
-        } else {
-            alert('No mistakes found!');
-        }
-    }
-
-    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
-    document.getElementById('checkBtn').addEventListener('click', checkSolution);
-    document.getElementById('hintBtn').addEventListener('click', hint);
-    document.addEventListener('DOMContentLoaded', initializeGrid);
-</script>
-<script>
-    const constraints = [
-        [null, '=', null, '×'],
-        ['×', null, '=', null],
-        [null, '=', null, '×'],
-        ['×', null, '=', null]
-    ];
-
-    function initializeGrid() {
-        const puzzleGrid = document.getElementById('puzzleGrid');
-        puzzleGrid.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.addEventListener('click', () => cycleCell(cell));
-                puzzleGrid.appendChild(cell);
-
-                if (j < 3 && constraints[i][j]) {
-                    const hConstraint = document.createElement('div');
-                    hConstraint.className = 'constraint horizontal text-blue-600';
-                    hConstraint.textContent = constraints[i][j];
-                    cell.appendChild(hConstraint);
-                }
-                if (i < 3 && constraints[i][j]) {
-                    const vConstraint = document.createElement('div');
-                    vConstraint.className = 'constraint vertical text-blue-600';
-                    vConstraint.textContent = constraints[i][j];
-                    cell.appendChild(vConstraint);
-                }
-            }
-        }
-    }
-
-    function cycleCell(cell) {
-        const symbols = ['', '🪑', '🌿'];
-        let current = symbols.indexOf(cell.textContent);
-        cell.textContent = symbols[(current + 1) % symbols.length];
-        validateGrid();
-    }
-
-    function validateGrid() {
-        const errorMessage = document.getElementById('error-message');
-        errorMessage.style.display = 'none';
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error', 'correct'));
-        
-        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-        document.querySelectorAll('.cell').forEach(cell => {
-            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-        });
-        
-        let errorFound = false;
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                    errorMessage.textContent = 'Rule violated: No three identical symbols in a row or column.';
-                    errorMessage.style.display = 'block';
-                    errorFound = true;
-                }
-            }
-        }
-        document.getElementById('checkBtn').disabled = errorFound;
-    }
-
-    function provideHint() {
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
-        document.getElementById('error-message').textContent = 'Hint: Adjust highlighted cells to follow the rules.';
-        document.getElementById('error-message').style.display = 'block';
-        
-        document.querySelectorAll('.cell').forEach(cell => {
-            if (cell.textContent === '') {
-                cell.classList.add('error');
-            }
-        });
-    }
-
-    function checkPuzzle() {
-        const errorMessage = document.getElementById('error-message');
-        const allCells = document.querySelectorAll('.cell');
-        if ([...allCells].some(cell => cell.textContent === '')) {
-            errorMessage.textContent = 'Error: Complete all cells before checking.';
-            errorMessage.style.display = 'block';
-            return;
-        }
-        if (document.getElementById('checkBtn').disabled) {
-            errorMessage.textContent = 'Error: Fix rule violations before checking.';
-            errorMessage.style.display = 'block';
-            return;
-        }
-        allCells.forEach(cell => cell.classList.add('correct'));
-    }
-
-    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
-    document.getElementById('checkBtn').addEventListener('click', checkPuzzle);
-    document.getElementById('hintBtn').addEventListener('click', provideHint);
-    document.addEventListener('DOMContentLoaded', initializeGrid);
-</script>
-<script>
-    const constraints = [
-        [null, '=', null, '×'],
-        ['×', null, '=', null],
-        [null, '=', null, '×'],
-        ['×', null, '=', null]
-    ];
-    
-    function initializeGrid() {
-        const puzzleGrid = document.getElementById('puzzleGrid');
-        puzzleGrid.innerHTML = '';
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 4; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.addEventListener('click', () => cycleCell(cell));
-                puzzleGrid.appendChild(cell);
-                
-                if (j < 3 && constraints[i][j]) {
-                    const hConstraint = document.createElement('div');
-                    hConstraint.className = 'constraint horizontal';
-                    hConstraint.textContent = constraints[i][j];
-                    cell.appendChild(hConstraint);
-                }
-                if (i < 3 && constraints[i][j]) {
-                    const vConstraint = document.createElement('div');
-                    vConstraint.className = 'constraint vertical';
-                    vConstraint.textContent = constraints[i][j];
-                    cell.appendChild(vConstraint);
-                }
-            }
-        }
-    }
-
-    function cycleCell(cell) {
-        const symbols = ['', '🪑', '🌿'];
-        let current = symbols.indexOf(cell.textContent);
-        cell.textContent = symbols[(current + 1) % symbols.length];
-        validateGrid();
-    }
-
-    function validateGrid() {
-        const errorMessage = document.getElementById('error-message');
-        errorMessage.style.display = 'none';
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
-        
-        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-        document.querySelectorAll('.cell').forEach(cell => {
-            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-        });
-        
-        let errorFound = false;
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                    errorMessage.textContent = 'Rule violated: No three identical symbols in a row or column.';
-                    errorMessage.style.display = 'block';
-                    errorFound = true;
-                }
-            }
-        }
-        document.getElementById('checkBtn').disabled = errorFound;
-    }
-
-    function highlightMistakes() {
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('error'));
-        
-        const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
-        document.querySelectorAll('.cell').forEach(cell => {
-            grid[cell.dataset.row][cell.dataset.col] = cell.textContent;
-        });
-        
-        for (let i = 0; i < 4; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (grid[i][j] && grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
-                    document.querySelector(`[data-row='${i}'][data-col='${j}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+1}']`).classList.add('error');
-                    document.querySelector(`[data-row='${i}'][data-col='${j+2}']`).classList.add('error');
-                }
-            }
-        }
-    }
-    
-    document.getElementById('resetBtn').addEventListener('click', initializeGrid);
-    document.getElementById('checkBtn').addEventListener('click', validateGrid);
-    document.getElementById('hintBtn').addEventListener('click', highlightMistakes);
-    document.addEventListener('DOMContentLoaded', initializeGrid);
-</script>
 </body>
 </html>
