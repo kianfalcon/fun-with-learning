@@ -50,28 +50,58 @@
             50% { background-color: #fde047; }
             100% { background-color: #fef08a; }
         }
+
+        .error-cell {
+            animation: errorPulse 2s infinite;
+        }
+
+        @keyframes errorPulse {
+            0% { background-color: #fecaca; }
+            50% { background-color: #fca5a5; }
+            100% { background-color: #fecaca; }
+        }
+
+        .difficulty-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-6">
     <div class="bg-white p-6 rounded-xl shadow-xl text-center w-full max-w-md">
         <h1 class="text-3xl font-bold text-gray-800">KIAN <span class="text-red-600">Falcon</span></h1>
         <p class="text-gray-500 mt-1">Furniture made fun, accessible, and sustainable</p>
-        <div class="flex justify-center items-center w-full mt-4 gap-4">
-            <span class="text-lg font-mono" id="timer">00:00</span>
-            <button id="refreshBtn" class="text-gray-600 hover:text-black text-3xl transition">🔄</button>
+        
+        <div class="flex justify-between items-center w-full mt-4">
+            <div class="flex items-center gap-4">
+                <span class="text-lg font-mono" id="timer">00:00</span>
+                <button id="refreshBtn" class="text-gray-600 hover:text-black text-3xl transition">🔄</button>
+            </div>
+            <select id="difficultySelect" class="difficulty-select px-4 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <option value="4">Easy (4×4)</option>
+                <option value="6">Medium (6×6)</option>
+                <option value="8">Hard (8×8)</option>
+            </select>
         </div>
-        <div id="gameGrid" class="grid grid-cols-4 gap-2 mt-6 p-4 bg-gray-100 rounded-lg"></div>
+
+        <div id="gameGrid" class="grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg grid-cols-4"></div>
+        
         <div class="flex justify-center gap-4 mt-6">
             <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Undo</button>
             <button id="hintBtn" class="px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-100 transition">Hint</button>
             <button id="clearBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Clear</button>
         </div>
+
         <div class="mt-6 text-left text-gray-600 text-sm">
             <h3 class="font-semibold">How to play</h3>
             <ul class="mt-2 space-y-2">
                 <li>• Fill the grid with chairs and sustainability symbols 🪑🌿</li>
-                <li>• Valid pair: 🪑🪑 Invalid group: 🪑🪑🪑</li>
-                <li>• Each row and column must have equal symbols 🪑🌿</li>
+                <li>• No more than two same symbols consecutively</li>
+                <li>• Each row and column must have equal symbols</li>
             </ul>
             <p class="mt-2">Click refresh to start a new puzzle 🔄</p>
         </div>
@@ -110,27 +140,47 @@
         </div>
     </div>
 
-    <script>
+ <script>
         document.addEventListener("DOMContentLoaded", () => {
-            let grid = [
-                ["🌿", "", "🪑", ""],
-                ["", "🪑", "", "🌿"],
-                ["🪑", "", "🌿", ""],
-                ["", "🌿", "", "🪑"]
-            ];
+            let gridSize = 4;
+            let errorCheckTimeout = null;
             
-            // Track initial pre-filled cells as locked
+            // Initial patterns for different grid sizes
+            const patterns = {
+                4: [
+                    [
+                        ["🌿", "", "🪑", ""],
+                        ["", "🪑", "", "🌿"],
+                        ["🪑", "", "🌿", ""],
+                        ["", "🌿", "", "🪑"]
+                    ]
+                ],
+                6: [
+                    [
+                        ["🌿", "", "🪑", "", "🌿", ""],
+                        ["", "🪑", "", "🌿", "", "🪑"],
+                        ["🪑", "", "🌿", "", "🪑", ""],
+                        ["", "🌿", "", "🪑", "", "🌿"],
+                        ["🌿", "", "🪑", "", "🌿", ""],
+                        ["", "🪑", "", "🌿", "", "🪑"]
+                    ]
+                ],
+                8: [
+                    [
+                        ["🌿", "", "🪑", "", "🌿", "", "🪑", ""],
+                        ["", "🪑", "", "🌿", "", "🪑", "", "🌿"],
+                        ["🪑", "", "🌿", "", "🪑", "", "🌿", ""],
+                        ["", "🌿", "", "🪑", "", "🌿", "", "🪑"],
+                        ["🌿", "", "🪑", "", "🌿", "", "🪑", ""],
+                        ["", "🪑", "", "🌿", "", "🪑", "", "🌿"],
+                        ["🪑", "", "🌿", "", "🪑", "", "🌿", ""],
+                        ["", "🌿", "", "🪑", "", "🌿", "", "🪑"]
+                    ]
+                ]
+            };
+
+            let grid = patterns[4][0];
             let lockedCells;
-            
-            function updateLockedCells() {
-                lockedCells = grid.map(row => 
-                    row.map(cell => cell !== "")
-                );
-            }
-            
-            // Initialize locked cells based on the first puzzle
-            updateLockedCells();
-            
             let history = [JSON.parse(JSON.stringify(grid))];
             let currentStep = 0;
             let hintCell = null;
@@ -140,9 +190,31 @@
                 timer++;
             }, 1000);
 
+            function updateLockedCells() {
+                lockedCells = grid.map(row => 
+                    row.map(cell => cell !== "")
+                );
+            }
+
+            function debounce(func, wait) {
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(errorCheckTimeout);
+                        func(...args);
+                    };
+                    clearTimeout(errorCheckTimeout);
+                    errorCheckTimeout = setTimeout(later, wait);
+                };
+            }
+
+            const debouncedErrorCheck = debounce(() => {
+                const errors = checkErrors();
+                renderGrid(errors);
+            }, 500);
+
             function checkErrors() {
                 let errors = new Set();
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < gridSize; i++) {
                     let row = grid[i];
                     let col = grid.map(r => r[i]);
                     let rowCounts = { "🪑": 0, "🌿": 0 };
@@ -152,7 +224,7 @@
                     let rowSymbols = { "🪑": [], "🌿": [] };
                     let colSymbols = { "🪑": [], "🌿": [] };
                     
-                    for (let j = 0; j < 4; j++) {
+                    for (let j = 0; j < gridSize; j++) {
                         // Count symbols for balance check
                         if (row[j]) {
                             rowCounts[row[j]]++;
@@ -164,23 +236,28 @@
                         }
                     }
                     
-                    // Check for three or more same symbols in rows
-                    for (let symbol of ["🪑", "🌿"]) {
-                        if (rowSymbols[symbol].length > 2) {
-                            rowSymbols[symbol].forEach(colIndex => {
-                                errors.add(`${i}-${colIndex}`);
-                            });
+                    // Check for three consecutive same symbols
+                    for (let j = 0; j < gridSize - 2; j++) {
+                        if (row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
+                            errors.add(`${i}-${j}`);
+                            errors.add(`${i}-${j+1}`);
+                            errors.add(`${i}-${j+2}`);
                         }
-                        if (colSymbols[symbol].length > 2) {
-                            colSymbols[symbol].forEach(rowIndex => {
-                                errors.add(`${rowIndex}-${i}`);
-                            });
+                        if (col[j] && col[j] === col[j+1] && col[j] === col[j+2]) {
+                            errors.add(`${j}-${i}`);
+                            errors.add(`${j+1}-${i}`);
+                            errors.add(`${j+2}-${i}`);
                         }
                     }
                     
                     // Check for equal number of symbols in rows and columns
-                    if (rowCounts["🪑"] !== rowCounts["🌿"]) errors.add(`row-${i}`);
-                    if (colCounts["🪑"] !== colCounts["🌿"]) errors.add(`col-${i}`);
+                    const targetCount = gridSize/2;
+                    if (rowCounts["🪑"] > targetCount || rowCounts["🌿"] > targetCount) {
+                        errors.add(`row-${i}`);
+                    }
+                    if (colCounts["🪑"] > targetCount || colCounts["🌿"] > targetCount) {
+                        errors.add(`col-${i}`);
+                    }
                 }
                 return errors;
             }
@@ -188,14 +265,6 @@
             function checkCompletion() {
                 if (checkErrors().size > 0) return false;
                 return grid.every(row => row.every(cell => cell));
-            }
-
-            function showModal(modalId) {
-                document.getElementById(modalId).style.display = 'flex';
-            }
-
-            function hideModal(modalId) {
-                document.getElementById(modalId).style.display = 'none';
             }
 
             function showCompletionMessage() {
@@ -227,19 +296,22 @@
                 document.getElementById('successTitle').textContent = randomMessage;
                 document.getElementById('successTime').textContent = `Completion Time: ${timeSpent}`;
                 document.getElementById('successFact').textContent = `Did you know? ${randomFact}`;
-                showModal('successModal');
+                document.getElementById('successModal').style.display = 'flex';
             }
 
-            function renderGrid() {
+            function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
-                let errors = checkErrors();
+                gridContainer.className = `grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg grid-cols-${gridSize}`;
+                
+                const cellSize = gridSize === 8 ? "w-12 h-12" : "w-16 h-16";
+                const fontSize = gridSize === 8 ? "text-xl" : "text-2xl";
+                
                 grid.forEach((row, rowIndex) => {
                     row.forEach((cell, colIndex) => {
                         const cellElement = document.createElement("div");
-                        cellElement.classList.add("w-16", "h-16", "flex", "items-center", "justify-center", "text-2xl", "font-bold", "transition", "bg-white", "border", "border-gray-300", "rounded-lg", "shadow-sm");
+                        cellElement.classList.add(cellSize, fontSize, "flex", "items-center", "justify-center", "font-bold", "transition", "bg-white", "border", "border-gray-300", "rounded-lg", "shadow-sm");
                         
-                        // Add visual indication for locked cells
                         if (lockedCells[rowIndex][colIndex]) {
                             cellElement.classList.add("bg-gray-100");
                             cellElement.classList.remove("cursor-pointer", "hover:bg-gray-100");
@@ -248,7 +320,7 @@
                         }
                         
                         if (errors.has(`${rowIndex}-${colIndex}`)) {
-                            cellElement.classList.add("bg-red-200");
+                            cellElement.classList.add("error-cell");
                         }
                         
                         if (Array.isArray(hintCell) && hintCell.includes(`${rowIndex}-${colIndex}`)) {
@@ -257,7 +329,6 @@
                         
                         cellElement.innerHTML = cell || "";
                         
-                        // Only add click listener to non-locked cells
                         if (!lockedCells[rowIndex][colIndex]) {
                             cellElement.addEventListener("click", () => {
                                 if (!grid[rowIndex][colIndex]) {
@@ -271,6 +342,8 @@
                                 history.push(JSON.parse(JSON.stringify(grid)));
                                 currentStep++;
                                 renderGrid();
+                                debouncedErrorCheck();
+                                
                                 if (checkCompletion()) {
                                     setTimeout(() => {
                                         showCompletionMessage();
@@ -284,58 +357,56 @@
             }
 
             function generateNewPuzzle() {
-                const validPatterns = [
-                    [
-                        ["🌿", "", "🪑", ""],
-                        ["", "🪑", "", "🌿"],
-                        ["🪑", "", "🌿", ""],
-                        ["", "🌿", "", "🪑"]
-                    ],
-                    [
-                        ["🪑", "", "", "🌿"],
-                        ["", "🌿", "🪑", ""],
-                        ["🌿", "🪑", "", ""],
-                        ["", "", "🌿", "🪑"]
-                    ],
-                    [
-                        ["", "🌿", "", "🪑"],
-                        ["🪑", "", "🌿", ""],
-                        ["", "🪑", "", "🌿"],
-                        ["🌿", "", "🪑", ""]
-                    ],
-                    [
-                        ["🌿", "", "", "🪑"],
-                        ["", "🪑", "🌿", ""],
-                        ["🪑", "🌿", "", ""],
-                        ["", "", "🪑", "🌿"]
-                    ]
-                ];
-
-                const newPattern = JSON.parse(JSON.stringify(
-                    validPatterns[Math.floor(Math.random() * validPatterns.length)]
+                const sizePatterns = patterns[gridSize];
+                const basePattern = JSON.parse(JSON.stringify(
+                    sizePatterns[Math.floor(Math.random() * sizePatterns.length)]
                 ));
 
-                for (let i = 0; i < 4; i++) {
+                // Apply transformations
+                for (let i = 0; i < gridSize; i++) {
                     if (Math.random() < 0.5) {
-                        newPattern[i].reverse();
+                        basePattern[i].reverse();
                     }
                 }
 
-            const swapPairs = [[0,2], [1,3]];
+                // Create swap pairs based on grid size
+                const swapPairs = [];
+                for (let i = 0; i < gridSize - 1; i += 2) {
+                    swapPairs.push([i, i + 1]);
+                }
+
                 swapPairs.forEach(([a, b]) => {
                     if (Math.random() < 0.5) {
-                        [newPattern[a], newPattern[b]] = [newPattern[b], newPattern[a]];
+                        [basePattern[a], basePattern[b]] = [basePattern[b], basePattern[a]];
                     }
                 });
 
-                return newPattern;
+                return basePattern;
             }
-            
+
+            // Event Listeners
+            document.getElementById("difficultySelect").addEventListener("change", (e) => {
+                gridSize = parseInt(e.target.value);
+                grid = generateNewPuzzle();
+                history = [JSON.parse(JSON.stringify(grid))];
+                currentStep = 0;
+                timer = 0;
+                updateLockedCells();
+                
+                const cells = document.querySelectorAll('#gameGrid > div');
+                cells.forEach(cell => {
+                    cell.classList.remove('completed-cell');
+                });
+                
+                renderGrid();
+            });
+
             document.getElementById("undoBtn").addEventListener("click", () => {
                 if (currentStep > 0) {
                     currentStep--;
                     grid = JSON.parse(JSON.stringify(history[currentStep]));
                     renderGrid();
+                    debouncedErrorCheck();
                 }
             });
 
@@ -349,7 +420,7 @@
                         let message = "Highlighted cells show potential issues:";
                         
                         if (cellErrors.length >= 3) {
-                            message += "<br>• More than two same symbols in a row or column";
+                            message += "<br>• More than two consecutive same symbols";
                         }
                         
                         const rowError = errors.find(err => err.startsWith('row-'));
@@ -360,7 +431,7 @@
                         }
 
                         document.getElementById('hintMessage').innerHTML = message;
-                        showModal('hintModal');
+                        document.getElementById('hintModal').style.display = 'flex';
                         
                         renderGrid();
                         setTimeout(() => {
@@ -378,11 +449,11 @@
                             message = `Column ${colNum} needs equal numbers of 🪑 and 🌿`;
                         }
                         document.getElementById('hintMessage').textContent = message;
-                        showModal('hintModal');
+                        document.getElementById('hintModal').style.display = 'flex';
                     }
                 } else {
                     document.getElementById('hintMessage').textContent = "Looking good! All rules are being followed.";
-                    showModal('hintModal');
+                    document.getElementById('hintModal').style.display = 'flex';
                 }
             });
 
@@ -393,7 +464,6 @@
                 updateLockedCells();
                 renderGrid();
                 
-                // Remove completion styling if present
                 const cells = document.querySelectorAll('#gameGrid > div');
                 cells.forEach(cell => {
                     cell.classList.remove('completed-cell');
@@ -408,15 +478,158 @@
                 updateLockedCells();
                 renderGrid();
                 
-                // Remove completion styling if present
                 const cells = document.querySelectorAll('#gameGrid > div');
                 cells.forEach(cell => {
                     cell.classList.remove('completed-cell');
                 });
             });
             
+            // Initialize the game
+            updateLockedCells();
             renderGrid();
         });
     </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Puzzle Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .completed-cell {
+            animation: successPulse 2s infinite;
+            background-color: #86efac !important;
+        }
+
+        @keyframes successPulse {
+            0% { background-color: #86efac; }
+            50% { background-color: #4ade80; }
+            100% { background-color: #86efac; }
+        }
+
+        .hint-cell {
+            animation: hintPulse 2s infinite;
+        }
+
+        @keyframes hintPulse {
+            0% { background-color: #fef08a; }
+            50% { background-color: #fde047; }
+            100% { background-color: #fef08a; }
+        }
+
+        .error-cell {
+            animation: errorPulse 2s infinite;
+        }
+
+        @keyframes errorPulse {
+            0% { background-color: #fecaca; }
+            50% { background-color: #fca5a5; }
+            100% { background-color: #fecaca; }
+        }
+
+        .difficulty-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="bg-white p-6 rounded-xl shadow-xl text-center w-full max-w-md">
+        <h1 class="text-3xl font-bold text-gray-800">KIAN <span class="text-red-600">Falcon</span></h1>
+        <p class="text-gray-500 mt-1">Furniture made fun, accessible, and sustainable</p>
+        
+        <div class="flex justify-between items-center w-full mt-4">
+            <div class="flex items-center gap-4">
+                <span class="text-lg font-mono" id="timer">00:00</span>
+                <button id="refreshBtn" class="text-gray-600 hover:text-black text-3xl transition">🔄</button>
+            </div>
+            <select id="difficultySelect" class="difficulty-select px-4 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <option value="4">Easy (4×4)</option>
+                <option value="6">Medium (6×6)</option>
+                <option value="8">Hard (8×8)</option>
+            </select>
+        </div>
+
+        <div id="gameGrid" class="grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg grid-cols-4"></div>
+        
+        <div class="flex justify-center gap-4 mt-6">
+            <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Undo</button>
+            <button id="hintBtn" class="px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-100 transition">Hint</button>
+            <button id="clearBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Clear</button>
+        </div>
+
+        <div class="mt-6 text-left text-gray-600 text-sm">
+            <h3 class="font-semibold">How to play</h3>
+            <ul class="mt-2 space-y-2">
+                <li>• Fill the grid with chairs and sustainability symbols 🪑🌿</li>
+                <li>• No more than two same symbols consecutively</li>
+                <li>• Each row and column must have equal symbols</li>
+            </ul>
+            <p class="mt-2">Click refresh to start a new puzzle 🔄</p>
+        </div>
+    </div>
+
+    <!-- Hint Modal -->
+    <div id="hintModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Hint</h2>
+            <p id="hintMessage" class="text-gray-600 mb-6"></p>
+            <button onclick="document.getElementById('hintModal').style.display = 'none'" 
+                    class="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition">
+                Got it!
+            </button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="text-4xl mb-4">🎉</div>
+            <h2 class="text-2xl font-bold mb-2" id="successTitle"></h2>
+            <p class="text-gray-600 mb-2" id="successTime"></p>
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-sm text-gray-600 italic" id="successFact"></p>
+            </div>
+            <a href="https://www.eagle-grp.com/kian-falcon-manufacturing-llp" 
+               target="_blank" 
+               class="inline-block px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition mb-4 w-full">
+                Explore Our Sustainable Furniture
+            </a>
+            <button onclick="document.getElementById('successModal').style.display = 'none'" 
+                    class="block w-full px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">
+                Continue Playing
+            </button>
+        </div>
+    </div>
 </body>
 </html>
