@@ -421,12 +421,12 @@
                 if (errors.length > 0) {
                     let cellErrors = errors.filter(err => err.includes('-') && !err.startsWith('row-') && !err.startsWith('col-'));
                     
-                    if (cellErrors.length > 0) {
+                        if (cellErrors.length > 0) {
                         hintCell = cellErrors;
                         let message = "Highlighted cells show potential issues:";
                         
                         if (cellErrors.length >= 3) {
-                            message += "<br>• More than two consecutive same symbols";
+                            message += "<br>• More than two same symbols in a row or column";
                         }
                         
                         const rowError = errors.find(err => err.startsWith('row-'));
