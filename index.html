@@ -5,6 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Binary Puzzle Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .completed-cell {
+            animation: successPulse 2s infinite;
+            background-color: #86efac !important; /* Light green */
+        }
+
+        @keyframes successPulse {
+            0% { background-color: #86efac; }
+            50% { background-color: #4ade80; }
+            100% { background-color: #86efac; }
+        }
+
+        .hint-cell {
+            animation: hintPulse 2s infinite;
+        }
+
+        @keyframes hintPulse {
+            0% { background-color: #fef08a; }
+            50% { background-color: #fde047; }
+            100% { background-color: #fef08a; }
+        }
+    </style>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             let grid = [
@@ -176,17 +222,20 @@
                         let message = "Highlighted cells show potential issues:";
                         
                         if (cellErrors.length >= 3) {
-                            message += "\n- More than two same symbols in a row or column";
+                            message += "\n• More than two same symbols in a row or column";
                         }
                         
                         const rowError = errors.find(err => err.startsWith('row-'));
                         const colError = errors.find(err => err.startsWith('col-'));
                         
                         if (rowError || colError) {
-                            message += "\n- Check for equal numbers of 🪑 and 🌿";
+                            message += "\n• Check for equal numbers of 🪑 and 🌿";
                         }
+
+                        // Show hint modal with message
+                        document.getElementById('hintMessage').innerHTML = message.replace(/\n/g, '<br>');
+                        document.getElementById('hintModal').style.display = 'flex';
                         
-                        alert(message);
                         renderGrid();
                         setTimeout(() => {
                             hintCell = null;
@@ -195,16 +244,20 @@
                     } else if (errors.length > 0) {
                         // Handle row/column balance errors
                         const rowError = errors.find(err => err.startsWith('row-'));
+                        let message = '';
                         if (rowError) {
                             const rowNum = parseInt(rowError.split('-')[1]) + 1;
-                            alert(`Hint: Row ${rowNum} needs equal numbers of 🪑 and 🌿`);
+                            message = `Row ${rowNum} needs equal numbers of 🪑 and 🌿`;
                         } else {
                             const colNum = parseInt(errors[0].split('-')[1]) + 1;
-                            alert(`Hint: Column ${colNum} needs equal numbers of 🪑 and 🌿`);
+                            message = `Column ${colNum} needs equal numbers of 🪑 and 🌿`;
                         }
+                        document.getElementById('hintMessage').textContent = message;
+                        document.getElementById('hintModal').style.display = 'flex';
                     }
                 } else {
-                    alert("Looking good! All rules are being followed.");
+                    document.getElementById('hintMessage').textContent = "Looking good! All rules are being followed.";
+                    document.getElementById('hintModal').style.display = 'flex';
                 }
             });
 
