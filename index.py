@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 
-const SmallIcon = ({ children }) => (
-  <span className="text-base">{children}</span>
+const SmallIcon = ({ type }) => (
+  <span className="text-base">
+    {type === 'chair' ? '\u{1FA91}' : '\u{1F33F}'}
+  </span>
 );
 
-const GameIcon = ({ children }) => (
-  <span className="text-2xl">{children}</span>
+const GameIcon = ({ type }) => (
+  <span className="text-2xl">
+    {type === 'chair' ? '\u{1FA91}' : '\u{1F33F}'}
+  </span>
 );
 
 const BinaryPuzzleGame = () => {
@@ -298,9 +302,9 @@ const BinaryPuzzleGame = () => {
                 disabled={isInitialCell}
               >
                 {cell === 'chair' ? (
-                  <GameIcon>🪑</GameIcon>
+                  <GameIcon type="chair" />
                 ) : cell === 'recycle' ? (
-                  <GameIcon>🌿</GameIcon>
+                  <GameIcon type="recycle" />
                 ) : null}
               </button>
             );
@@ -347,7 +351,7 @@ const BinaryPuzzleGame = () => {
       {/* Hint message */}
       {showHint && (
         <div className="text-sm bg-yellow-50 border-2 border-yellow-200 p-3 rounded-lg w-64">
- <span className="font-medium">
+          <span className="font-medium">
             {isGameComplete(grid) 
               ? "All cells are correct!" 
               : hintCell 
@@ -364,28 +368,28 @@ const BinaryPuzzleGame = () => {
           <li className="flex items-center gap-2">
             • Fill the grid with chairs and sustainability symbols
             <span className="flex gap-2">
-              <SmallIcon>🪑</SmallIcon>
-              <SmallIcon>🌿</SmallIcon>
+              <SmallIcon type="chair" />
+              <SmallIcon type="recycle" />
             </span>
           </li>
           <li className="flex items-center gap-2">
             • Valid pair: 
             <div className="flex gap-1 bg-gray-100 p-1 rounded">
-              <SmallIcon>🪑</SmallIcon>
-              <SmallIcon>🪑</SmallIcon>
+              <SmallIcon type="chair" />
+              <SmallIcon type="chair" />
             </div>
             Invalid group:
             <div className="flex gap-1 bg-red-100 p-1 rounded">
-              <SmallIcon>🪑</SmallIcon>
-              <SmallIcon>🪑</SmallIcon>
-              <SmallIcon>🪑</SmallIcon>
+              <SmallIcon type="chair" />
+              <SmallIcon type="chair" />
+              <SmallIcon type="chair" />
             </div>
           </li>
           <li className="flex items-center gap-2">
             • Each row and column must have equal symbols
             <div className="flex gap-1 bg-gray-100 p-1 rounded">
-              <SmallIcon>🪑</SmallIcon>
-              <SmallIcon>🌿</SmallIcon>
+              <SmallIcon type="chair" />
+              <SmallIcon type="recycle" />
             </div>
           </li>
         </ul>
