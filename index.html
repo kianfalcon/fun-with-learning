@@ -298,10 +298,12 @@
                 document.getElementById('successModal').style.display = 'flex';
             }
 
-            function renderGrid(errors = new Set()) {
+           function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
+                gridContainer.className = "grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg";
                 gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, minmax(0, 1fr))`;
+                gridContainer.style.justifyItems = "center";
                 
                 const cellSize = gridSize === 8 ? "w-12 h-12" : "w-16 h-16";
                 const fontSize = gridSize === 8 ? "text-xl" : "text-2xl";
