@@ -13,10 +13,17 @@
                 ["🪑", "", "🌿", ""],
                 ["", "🌿", "", "🪑"]
             ];
-            // Store the initial state to track locked cells
-            const lockedCells = grid.map(row => 
-                row.map(cell => cell !== "")
-            );
+            // Track initial pre-filled cells as locked
+            let lockedCells;
+            
+            function updateLockedCells() {
+                lockedCells = grid.map(row => 
+                    row.map(cell => cell !== "")
+                );
+            }
+            
+            // Initialize locked cells based on the first puzzle
+            updateLockedCells();
             let history = [JSON.parse(JSON.stringify(grid))];
             let currentStep = 0;
             let hintCell = null;
@@ -205,6 +212,7 @@
                 grid = JSON.parse(JSON.stringify(history[0]));
                 currentStep = 0;
                 history = [JSON.parse(JSON.stringify(grid))];
+                updateLockedCells();
                 renderGrid();
             });
 
@@ -265,6 +273,7 @@
                 history = [JSON.parse(JSON.stringify(grid))];
                 currentStep = 0;
                 timer = 0;
+                updateLockedCells();  // Update locked cells for new puzzle
                 renderGrid();
             });
             
