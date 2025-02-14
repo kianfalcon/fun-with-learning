@@ -340,30 +340,6 @@
                         }
                         
                         cellElement.innerHTML = cell || "";
-                        
-                        if (!lockedCells[rowIndex][colIndex]) {
-                            cellElement.addEventListener("click", () => {
-                                if (!grid[rowIndex][colIndex]) {
-                                    grid[rowIndex][colIndex] = "🪑";
-                                } else if (grid[rowIndex][colIndex] === "🪑") {
-                                    grid[rowIndex][colIndex] = "🌿";
-                                } else {
-                                    grid[rowIndex][colIndex] = "";
-                                }
-                                history = history.slice(0, currentStep + 1);
-                                history.push(JSON.parse(JSON.stringify(grid)));
-                                currentStep++;
-                                renderGrid();
-                                debouncedErrorCheck();
-                                
-                                if (checkCompletion()) {
-                                    setTimeout(() => {
-                                        showCompletionMessage();
-                                    }, 100);
-                                }
-                            });
-                        }
-                        gridContainer.appendChild(cellElement);
                     });
                 });
             }
