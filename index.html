@@ -34,33 +34,33 @@
                     let rowCounts = { "🪑": 0, "🌿": 0 };
                     let colCounts = { "🪑": 0, "🌿": 0 };
                     
-                    // Check for non-consecutive repeating symbols in rows
+                    // Track positions of each symbol in rows and columns
+                    let rowSymbols = { "🪑": [], "🌿": [] };
+                    let colSymbols = { "🪑": [], "🌿": [] };
+                    
                     for (let j = 0; j < 4; j++) {
-                        rowCounts[row[j]] = (rowCounts[row[j]] || 0) + 1;
-                        colCounts[col[j]] = (colCounts[col[j]] || 0) + 1;
-
-                        // Check for three or more same symbols in row (consecutive or not)
+                        // Count symbols for balance check
                         if (row[j]) {
-                            let symbolCount = row.filter(cell => cell === row[j]).length;
-                            if (symbolCount > 2) {
-                                row.forEach((cell, index) => {
-                                    if (cell === row[j]) {
-                                        errors.add(`${i}-${index}`);
-                                    }
-                                });
-                            }
+                            rowCounts[row[j]]++;
+                            rowSymbols[row[j]].push(j);
                         }
-
-                        // Check for three or more same symbols in column (consecutive or not)
                         if (col[j]) {
-                            let symbolCount = col.filter(cell => cell === col[j]).length;
-                            if (symbolCount > 2) {
-                                col.forEach((cell, index) => {
-                                    if (cell === col[j]) {
-                                        errors.add(`${index}-${i}`);
-                                    }
-                                });
-                            }
+                            colCounts[col[j]]++;
+                            colSymbols[col[j]].push(j);
+                        }
+                    }
+                    
+                    // Check for three or more same symbols in rows
+                    for (let symbol of ["🪑", "🌿"]) {
+                        if (rowSymbols[symbol].length > 2) {
+                            rowSymbols[symbol].forEach(colIndex => {
+                                errors.add(`${i}-${colIndex}`);
+                            });
+                        }
+                        if (colSymbols[symbol].length > 2) {
+                            colSymbols[symbol].forEach(rowIndex => {
+                                errors.add(`${rowIndex}-${i}`);
+                            });
                         }
                     }
                     
@@ -95,7 +95,7 @@
                 ];
                 const randomFact = facts[Math.floor(Math.random() * facts.length)];
 
-                alert(`🎉 ${randomMessage}\n\nTime: ${timeSpent}\n\nDid you know? ${randomFact}\n\n🏆 You've completed the puzzle following all sustainability rules!`);
+                alert(`🎉 ${randomMessage}\n\nTime: ${timeSpent}\n\nDid you know? ${randomFact}\n\n🏆 You've completed the puzzle following all sustainability rules!\n\n🌟 Visit www.eagle-grp.com/kian-falcon-manufacturing-llp to explore our sustainable furniture solutions and make your space eco-friendly today!`);
             }
 
             function renderGrid() {
@@ -208,35 +208,63 @@
                 renderGrid();
             });
 
-            document.getElementById("refreshBtn").addEventListener("click", () => {
-                // Create a new array with only the locked cells
-                const lockedValues = grid.map((row, i) => 
-                    row.map((cell, j) => lockedCells[i][j] ? cell : "")
-                );
-                
-                // Shuffle only the locked cells positions
-                const lockedPositions = [];
-                lockedValues.forEach((row, i) => {
-                    row.forEach((cell, j) => {
-                        if (cell) lockedPositions.push({value: cell, pos: [i, j]});
-                    });
-                });
-                
-                // Shuffle positions
-                for (let i = lockedPositions.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [lockedPositions[i], lockedPositions[j]] = [lockedPositions[j], lockedPositions[i]];
+            function generateNewPuzzle() {
+                // Create several valid base patterns
+                const validPatterns = [
+                    [
+                        ["🌿", "", "🪑", ""],
+                        ["", "🪑", "", "🌿"],
+                        ["🪑", "", "🌿", ""],
+                        ["", "🌿", "", "🪑"]
+                    ],
+                    [
+                        ["🪑", "", "", "🌿"],
+                        ["", "🌿", "🪑", ""],
+                        ["🌿", "🪑", "", ""],
+                        ["", "", "🌿", "🪑"]
+                    ],
+                    [
+                        ["", "🌿", "", "🪑"],
+                        ["🪑", "", "🌿", ""],
+                        ["", "🪑", "", "🌿"],
+                        ["🌿", "", "🪑", ""]
+                    ],
+                    [
+                        ["🌿", "", "", "🪑"],
+                        ["", "🪑", "🌿", ""],
+                        ["🪑", "🌿", "", ""],
+                        ["", "", "🪑", "🌿"]
+                    ]
+                ];
+
+                // Select a random pattern
+                const newPattern = JSON.parse(JSON.stringify(
+                    validPatterns[Math.floor(Math.random() * validPatterns.length)]
+                ));
+
+                // Randomly flip some rows
+                for (let i = 0; i < 4; i++) {
+                    if (Math.random() < 0.5) {
+                        newPattern[i].reverse();
+                    }
                 }
-                
-                // Create new grid with shuffled locked positions
-                grid = Array(4).fill().map(() => Array(4).fill(""));
-                lockedPositions.forEach(({value, pos}) => {
-                    grid[pos[0]][pos[1]] = value;
+
+                // Randomly swap some rows that maintain valid patterns
+                const swapPairs = [[0,2], [1,3]];
+                swapPairs.forEach(([a, b]) => {
+                    if (Math.random() < 0.5) {
+                        [newPattern[a], newPattern[b]] = [newPattern[b], newPattern[a]];
+                    }
                 });
-                
-                // Update history
+
+                return newPattern;
+            }
+
+            document.getElementById("refreshBtn").addEventListener("click", () => {
+                grid = generateNewPuzzle();
                 history = [JSON.parse(JSON.stringify(grid))];
                 currentStep = 0;
+                timer = 0;
                 renderGrid();
             });
             
