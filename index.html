@@ -88,7 +88,8 @@
             </select>
         </div>
 
-        <div id="gameGrid" class="grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg" style="grid-template-columns: repeat(4, minmax(0, 1fr));"></div>
+        <!-- Game Grid -->
+        <div id="gameGrid" class="grid gap-4 mt-6 p-8 bg-gray-100 rounded-lg mx-auto" style="grid-template-columns: repeat(4, minmax(0, 1fr)); width: fit-content; max-width: 100%;"></div>
         
         <div class="flex justify-center gap-4 mt-6">
             <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Undo</button>
@@ -139,7 +140,7 @@
             </button>
         </div>
     </div>
-    <script>
+<script>
         document.addEventListener("DOMContentLoaded", () => {
             let gridSize = 4;
             let errorCheckTimeout = null;
@@ -298,7 +299,7 @@
                 document.getElementById('successModal').style.display = 'flex';
             }
 
-           function renderGrid(errors = new Set()) {
+            function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
                 gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, minmax(0, 1fr))`;
@@ -340,6 +341,30 @@
                         }
                         
                         cellElement.innerHTML = cell || "";
+                        
+                        if (!lockedCells[rowIndex][colIndex]) {
+                            cellElement.addEventListener("click", () => {
+                                if (!grid[rowIndex][colIndex]) {
+                                    grid[rowIndex][colIndex] = "🪑";
+                                } else if (grid[rowIndex][colIndex] === "🪑") {
+                                    grid[rowIndex][colIndex] = "🌿";
+                                } else {
+                                    grid[rowIndex][colIndex] = "";
+                                }
+                                history = history.slice(0, currentStep + 1);
+                                history.push(JSON.parse(JSON.stringify(grid)));
+                                currentStep++;
+                                renderGrid();
+                                debouncedErrorCheck();
+                                
+                                if (checkCompletion()) {
+                                    setTimeout(() => {
+                                        showCompletionMessage();
+                                    }, 100);
+                                }
+                            });
+                        }
+                        gridContainer.appendChild(cellElement);
                     });
                 });
             }
