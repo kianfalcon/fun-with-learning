@@ -88,7 +88,7 @@
             </select>
         </div>
 
-        <div id="gameGrid" class="grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg grid-cols-4"></div>
+        <div id="gameGrid" class="grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg" style="grid-template-columns: repeat(4, minmax(0, 1fr));"></div>
         
         <div class="flex justify-center gap-4 mt-6">
             <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Undo</button>
@@ -139,8 +139,7 @@
             </button>
         </div>
     </div>
-
- <script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
             let gridSize = 4;
             let errorCheckTimeout = null;
@@ -302,7 +301,7 @@
             function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
-                gridContainer.className = `grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg grid-cols-${gridSize}`;
+                gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, minmax(0, 1fr))`;
                 
                 const cellSize = gridSize === 8 ? "w-12 h-12" : "w-16 h-16";
                 const fontSize = gridSize === 8 ? "text-xl" : "text-2xl";
