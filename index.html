@@ -13,6 +13,10 @@
                 ["🪑", "", "🌿", ""],
                 ["", "🌿", "", "🪑"]
             ];
+            // Store the initial state to track locked cells
+            const lockedCells = grid.map(row => 
+                row.map(cell => cell !== "")
+            );
             let history = [JSON.parse(JSON.stringify(grid))];
             let currentStep = 0;
             let hintCell = null;
@@ -54,8 +58,6 @@
             function checkCompletion() {
                 if (checkErrors().size > 0) return false;
                 return grid.every(row => row.every(cell => cell));
-                if (checkErrors().size > 0) return false;
-                return checkErrors().size === 0 && grid.flat().every(cell => cell);
             }
 
             function showCompletionMessage() {
@@ -76,7 +78,15 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
                 grid.forEach((row, rowIndex) => {
                     row.forEach((cell, colIndex) => {
                         const cellElement = document.createElement("div");
-                        cellElement.classList.add("w-16", "h-16", "flex", "items-center", "justify-center", "text-2xl", "font-bold", "cursor-pointer", "transition", "bg-white", "border", "border-gray-300", "rounded-lg", "shadow-sm", "hover:bg-gray-100");
+                        cellElement.classList.add("w-16", "h-16", "flex", "items-center", "justify-center", "text-2xl", "font-bold", "cursor-pointer", "transition", "bg-white", "border", "border-gray-300", "rounded-lg", "shadow-sm");
+                        
+                        // Add visual indication for locked cells
+                        if (lockedCells[rowIndex][colIndex]) {
+                            cellElement.classList.add("bg-gray-100");
+                            cellElement.classList.remove("cursor-pointer", "hover:bg-gray-100");
+                        } else {
+                            cellElement.classList.add("hover:bg-gray-100");
+                        }
                         
                         if (errors.has(`${rowIndex}-${colIndex}`)) {
                             cellElement.classList.add("bg-red-200");
@@ -86,7 +96,8 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
                         }
                         cellElement.innerHTML = cell || "";
                         
-                        if (history[0][rowIndex][colIndex] === "") {
+                        // Only add click listener to non-locked cells
+                        if (!lockedCells[rowIndex][colIndex]) {
                             cellElement.addEventListener("click", () => {
                                 if (!grid[rowIndex][colIndex]) {
                                     grid[rowIndex][colIndex] = "🪑";
@@ -122,24 +133,80 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
             document.getElementById("hintBtn").addEventListener("click", () => {
                 let errors = Array.from(checkErrors());
                 if (errors.length > 0) {
-                    hintCell = errors[0];
-                    renderGrid();
-                    setTimeout(() => {
-                        hintCell = null;
+                    // Filter out row/column errors to focus on specific cells
+                    let cellErrors = errors.filter(err => err.includes('-'));
+                    if (cellErrors.length > 0) {
+                        hintCell = cellErrors[0];
+                        const [row, col] = hintCell.split('-').map(Number);
+                        let hintMessage = "";
+                        
+                        // Check if this is part of a triplet
+                        if (
+                            (col < 2 && grid[row][col] && grid[row][col] === grid[row][col+1] && grid[row][col] === grid[row][col+2]) ||
+                            (col > 1 && grid[row][col] && grid[row][col] === grid[row][col-1] && grid[row][col] === grid[row][col-2])
+                        ) {
+                            hintMessage = "Avoid three consecutive same symbols";
+                        }
+                        
+                        // Show the hint with a message
+                        alert(`Hint: ${hintMessage || "Check this cell for balance"}`);
                         renderGrid();
-                    }, 3000);
+                        setTimeout(() => {
+                            hintCell = null;
+                            renderGrid();
+                        }, 3000);
+                    } else if (errors.length > 0) {
+                        // If no specific cell errors, give a general hint about row/column balance
+                        const rowError = errors.find(err => err.startsWith('row-'));
+                        if (rowError) {
+                            const rowNum = parseInt(rowError.split('-')[1]) + 1;
+                            alert(`Hint: Row ${rowNum} needs equal numbers of 🪑 and 🌿`);
+                        } else {
+                            const colNum = parseInt(errors[0].split('-')[1]) + 1;
+                            alert(`Hint: Column ${colNum} needs equal numbers of 🪑 and 🌿`);
+                        }
+                    }
+                } else {
+                    alert("You're doing great! No errors to hint about.");
                 }
             });
 
             document.getElementById("clearBtn").addEventListener("click", () => {
-                grid = history[0];
+                grid = JSON.parse(JSON.stringify(history[0]));
                 currentStep = 0;
                 history = [JSON.parse(JSON.stringify(grid))];
                 renderGrid();
             });
 
             document.getElementById("refreshBtn").addEventListener("click", () => {
-                grid.sort(() => Math.random() - 0.5);
+                // Create a new array with only the locked cells
+                const lockedValues = grid.map((row, i) => 
+                    row.map((cell, j) => lockedCells[i][j] ? cell : "")
+                );
+                
+                // Shuffle only the locked cells positions
+                const lockedPositions = [];
+                lockedValues.forEach((row, i) => {
+                    row.forEach((cell, j) => {
+                        if (cell) lockedPositions.push({value: cell, pos: [i, j]});
+                    });
+                });
+                
+                // Shuffle positions
+                for (let i = lockedPositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [lockedPositions[i], lockedPositions[j]] = [lockedPositions[j], lockedPositions[i]];
+                }
+                
+                // Create new grid with shuffled locked positions
+                grid = Array(4).fill().map(() => Array(4).fill(""));
+                lockedPositions.forEach(({value, pos}) => {
+                    grid[pos[0]][pos[1]] = value;
+                });
+                
+                // Update history
+                history = [JSON.parse(JSON.stringify(grid))];
+                currentStep = 0;
                 renderGrid();
             });
             
@@ -156,7 +223,7 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
             <button id="refreshBtn" class="text-gray-600 hover:text-black text-3xl transition">🔄</button>
         </div>
         <div id="gameGrid" class="grid grid-cols-4 gap-2 mt-6 p-4 bg-gray-100 rounded-lg"></div>
-    <div class="flex justify-center gap-4 mt-6">
+        <div class="flex justify-center gap-4 mt-6">
             <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium">Undo</button>
             <button id="hintBtn" class="px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium">Hint</button>
             <button id="clearBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium">Clear</button>
