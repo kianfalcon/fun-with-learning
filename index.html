@@ -13,14 +13,59 @@
                 ["🪑", "", "🌿", ""],
                 ["", "🌿", "", "🪑"]
             ];
-            
+            let history = [JSON.parse(JSON.stringify(grid))];
+            let currentStep = 0;
+            let hintCell = null;
+            let timer = 0;
+            let timerInterval = setInterval(() => {
+                document.getElementById("timer").textContent = `${Math.floor(timer / 60).toString().padStart(2, '0')}:${(timer % 60).toString().padStart(2, '0')}`;
+                timer++;
+            }, 1000);
+
+            function checkErrors() {
+                let errors = new Set();
+                for (let i = 0; i < 4; i++) {
+                    let row = grid[i];
+                    let col = grid.map(r => r[i]);
+                    let rowCounts = { "🪑": 0, "🌿": 0 };
+                    let colCounts = { "🪑": 0, "🌿": 0 };
+                    
+                    for (let j = 0; j < 4; j++) {
+                        rowCounts[row[j]] = (rowCounts[row[j]] || 0) + 1;
+                        colCounts[col[j]] = (colCounts[col[j]] || 0) + 1;
+                        
+                        if (j < 2 && row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
+                            errors.add(`${i}-${j}`);
+                            errors.add(`${i}-${j+1}`);
+                            errors.add(`${i}-${j+2}`);
+                        }
+                        if (j < 2 && col[j] && col[j] === col[j+1] && col[j] === col[j+2]) {
+                            errors.add(`${j}-${i}`);
+                            errors.add(`${j+1}-${i}`);
+                            errors.add(`${j+2}-${i}`);
+                        }
+                    }
+                    if (rowCounts["🪑"] !== rowCounts["🌿"]) errors.add(`row-${i}`);
+                    if (colCounts["🪑"] !== colCounts["🌿"]) errors.add(`col-${i}`);
+                }
+                return errors;
+            }
+
             function renderGrid() {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
+                let errors = checkErrors();
                 grid.forEach((row, rowIndex) => {
                     row.forEach((cell, colIndex) => {
                         const cellElement = document.createElement("div");
                         cellElement.classList.add("w-16", "h-16", "flex", "items-center", "justify-center", "text-2xl", "font-bold", "cursor-pointer", "transition", "bg-white", "border", "border-gray-300", "rounded-lg", "shadow-sm", "hover:bg-gray-100");
+                        
+                        if (errors.has(`${rowIndex}-${colIndex}`)) {
+                            cellElement.classList.add("bg-red-200");
+                        }
+                        if (hintCell === `${rowIndex}-${colIndex}`) {
+                            cellElement.classList.add("bg-yellow-200");
+                        }
                         cellElement.innerHTML = cell || "";
                         
                         cellElement.addEventListener("click", () => {
@@ -31,12 +76,47 @@
                             } else {
                                 grid[rowIndex][colIndex] = "";
                             }
+                            history.push(JSON.parse(JSON.stringify(grid)));
+                            currentStep++;
                             renderGrid();
                         });
                         gridContainer.appendChild(cellElement);
                     });
                 });
             }
+            
+            document.getElementById("hintBtn").addEventListener("click", () => {
+                let errors = Array.from(checkErrors());
+                if (errors.length > 0) {
+                    hintCell = errors[0];
+                    renderGrid();
+                    setTimeout(() => {
+                        hintCell = null;
+                        renderGrid();
+                    }, 3000);
+                }
+            });
+            
+            document.getElementById("undoBtn").addEventListener("click", () => {
+                if (currentStep > 0) {
+                    currentStep--;
+                    grid = JSON.parse(JSON.stringify(history[currentStep]));
+                    renderGrid();
+                }
+            });
+            
+            document.getElementById("clearBtn").addEventListener("click", () => {
+                grid = history[0];
+                currentStep = 0;
+                history = [JSON.parse(JSON.stringify(grid))];
+                renderGrid();
+            });
+            
+            document.getElementById("refreshBtn").addEventListener("click", () => {
+                grid.sort(() => Math.random() - 0.5);
+                renderGrid();
+            });
+            
             renderGrid();
         });
     </script>
@@ -46,30 +126,27 @@
         <h1 class="text-3xl font-bold text-gray-800">KIAN <span class="text-red-600">Falcon</span></h1>
         <p class="text-gray-500 mt-1">Furniture made fun, accessible, and sustainable</p>
         
-        <div class="flex justify-center items-center gap-2 mt-4">
-            <span class="text-lg font-mono">00:14</span>
-            <button class="text-gray-600 hover:text-black transition">
-                🔄
-            </button>
+        <div class="flex justify-center items-center w-full mt-4 gap-4">
+            <span class="text-lg font-mono" id="timer">00:00</span>
+            <button id="refreshBtn" class="text-gray-600 hover:text-black text-3xl transition">🔄</button>
         </div>
         
         <div id="gameGrid" class="grid grid-cols-4 gap-2 mt-6 p-4 bg-gray-100 rounded-lg"></div>
         
-        <div class="flex gap-4 mt-6">
-            <button class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium">Undo</button>
-            <button class="px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium">Hint</button>
-            <button class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium">Clear</button>
+        <div class="flex justify-center gap-4 mt-6">
+            <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium">Undo</button>
+            <button id="hintBtn" class="px-6 py-2 bg-white border border-gray-300 rounded-lg font-medium">Hint</button>
+            <button id="clearBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium">Clear</button>
         </div>
-        
-        <div class="mt-6 text-left text-gray-600 text-sm">
+            <div class="mt-6 text-left text-gray-600 text-sm">
             <h3 class="font-semibold">How to play</h3>
             <ul class="mt-2 space-y-2">
                 <li>• Fill the grid with chairs and sustainability symbols 🪑🌿</li>
-                <li>• Valid pair: <span class="bg-gray-100 p-1 rounded">🪑🪑</span> Invalid group: <span class="bg-red-100 p-1 rounded">🪑🪑🪑</span></li>
-                <li>• Each row and column must have equal symbols <span class="bg-gray-100 p-1 rounded">🪑🌿</span></li>
+                <li>• Valid pair: 🪑🪑 Invalid group: 🪑🪑🪑</li>
+                <li>• Each row and column must have equal symbols 🪑🌿</li>
             </ul>
+            <p class="mt-2">Click refresh to rearrange the puzzle 🔄</p>
         </div>
     </div>
-
 </body>
 </html>
