@@ -61,15 +61,6 @@
             100% { background-color: #fecaca; }
         }
 
-        .difficulty-select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
-        }
-
         .game-grid {
             display: grid;
             gap: 8px;
@@ -104,18 +95,6 @@
             background: #f3f4f6;
             cursor: not-allowed;
         }
-
-        .grid-8x8 .game-cell {
-            width: 48px;
-            height: 48px;
-            font-size: 20px;
-        }
-
-        .grid-6x6 .game-cell {
-            width: 56px;
-            height: 56px;
-            font-size: 22px;
-        }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-6">
@@ -128,15 +107,10 @@
                 <span class="text-lg font-mono" id="timer">00:00</span>
                 <button id="refreshBtn" class="text-gray-600 hover:text-black text-3xl transition">🔄</button>
             </div>
-            <select id="difficultySelect" class="difficulty-select px-4 py-2 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                <option value="4">Easy (4×4)</option>
-                <option value="6">Medium (6×6)</option>
-                <option value="8">Hard (8×8)</option>
-            </select>
         </div>
 
         <!-- Game Grid -->
-        <div id="gameGrid" class="game-grid"></div>
+        <div id="gameGrid" class="game-grid grid-4x4"></div>
         
         <div class="flex justify-center gap-4 mt-6">
             <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Undo</button>
@@ -146,12 +120,53 @@
 
         <div class="mt-6 text-left text-gray-600 text-sm">
             <h3 class="font-semibold">How to play</h3>
-            <ul class="mt-2 space-y-2">
-                <li>• Fill the grid with chairs and sustainability symbols 🪑🌿</li>
-                <li>• No more than two same symbols consecutively</li>
-                <li>• Each row and column must have equal symbols</li>
+            <ul class="mt-4 space-y-6">
+                <li class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 text-2xl">1.</div>
+                    <div>
+                        <p class="mb-2">Fill the grid with chairs and sustainability symbols:</p>
+                        <div class="flex gap-4 items-center bg-gray-100 p-3 rounded-lg">
+                            <div class="w-12 h-12 flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg text-xl">🪑</div>
+                            <div class="w-12 h-12 flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg text-xl">🌿</div>
+                        </div>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 text-2xl">2.</div>
+                    <div>
+                        <p class="mb-2">No more than two same symbols consecutively:</p>
+                        <div class="flex gap-2 items-center">
+                            <div class="flex gap-1 bg-white p-2 rounded-lg border-2 border-green-500">
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                            </div>
+                            <span class="mx-2">✅</span>
+                            <div class="flex gap-1 bg-white p-2 rounded-lg border-2 border-red-500">
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                            </div>
+                            <span class="mx-2">❌</span>
+                        </div>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 text-2xl">3.</div>
+                    <div>
+                        <p class="mb-2">Each row and column must have equal symbols:</p>
+                        <div class="flex gap-2 items-center">
+                            <div class="flex gap-1 bg-white p-2 rounded-lg border-2 border-green-500">
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🌿</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🌿</div>
+                            </div>
+                            <span class="mx-2">✅</span>
+                        </div>
+                    </div>
+                </li>
             </ul>
-            <p class="mt-2">Click refresh to start a new puzzle 🔄</p>
+            <p class="mt-6">Click refresh to start a new puzzle 🔄</p>
         </div>
     </div>
 
@@ -187,46 +202,33 @@
             </button>
         </div>
     </div>
-    <script>
+<script>
         document.addEventListener("DOMContentLoaded", () => {
-            let gridSize = 4;
             let errorCheckTimeout = null;
             
-            // Initial patterns for different grid sizes
-            const patterns = {
-                4: [
-                    [
-                        ["🌿", "", "🪑", ""],
-                        ["", "🪑", "", "🌿"],
-                        ["🪑", "", "🌿", ""],
-                        ["", "🌿", "", "🪑"]
-                    ]
+            // Initial patterns for 4x4 grid
+            const patterns = [
+                [
+                    ["🌿", "", "🪑", ""],
+                    ["", "🪑", "", "🌿"],
+                    ["🪑", "", "🌿", ""],
+                    ["", "🌿", "", "🪑"]
                 ],
-                6: [
-                    [
-                        ["🌿", "", "🪑", "", "🌿", ""],
-                        ["", "🪑", "", "🌿", "", "🪑"],
-                        ["🪑", "", "🌿", "", "🪑", ""],
-                        ["", "🌿", "", "🪑", "", "🌿"],
-                        ["🌿", "", "🪑", "", "🌿", ""],
-                        ["", "🪑", "", "🌿", "", "🪑"]
-                    ]
+                [
+                    ["🪑", "", "", "🌿"],
+                    ["", "🌿", "🪑", ""],
+                    ["🌿", "🪑", "", ""],
+                    ["", "", "🌿", "🪑"]
                 ],
-                8: [
-                    [
-                        ["🌿", "", "🪑", "", "🌿", "", "🪑", ""],
-                        ["", "🪑", "", "🌿", "", "🪑", "", "🌿"],
-                        ["🪑", "", "🌿", "", "🪑", "", "🌿", ""],
-                        ["", "🌿", "", "🪑", "", "🌿", "", "🪑"],
-                        ["🌿", "", "🪑", "", "🌿", "", "🪑", ""],
-                        ["", "🪑", "", "🌿", "", "🪑", "", "🌿"],
-                        ["🪑", "", "🌿", "", "🪑", "", "🌿", ""],
-                        ["", "🌿", "", "🪑", "", "🌿", "", "🪑"]
-                    ]
+                [
+                    ["", "🌿", "", "🪑"],
+                    ["🪑", "", "🌿", ""],
+                    ["", "🪑", "", "🌿"],
+                    ["🌿", "", "🪑", ""]
                 ]
-            };
+            ];
 
-            let grid = patterns[4][0];
+            let grid = patterns[0];
             let lockedCells;
             let history = [JSON.parse(JSON.stringify(grid))];
             let currentStep = 0;
@@ -261,13 +263,16 @@
 
             function checkErrors() {
                 let errors = new Set();
-                for (let i = 0; i < gridSize; i++) {
+                
+                // Check rows and columns
+                for (let i = 0; i < 4; i++) {
                     let row = grid[i];
                     let col = grid.map(r => r[i]);
                     let rowCounts = { "🪑": 0, "🌿": 0 };
                     let colCounts = { "🪑": 0, "🌿": 0 };
                     
-                    for (let j = 0; j < gridSize; j++) {
+                    // Count symbols
+                    for (let j = 0; j < 4; j++) {
                         if (row[j]) {
                             rowCounts[row[j]]++;
                         }
@@ -276,7 +281,7 @@
                         }
                         
                         // Check for three consecutive same symbols
-                        if (j < gridSize - 2) {
+                        if (j < 2) {
                             if (row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
                                 errors.add(`${i}-${j}`);
                                 errors.add(`${i}-${j+1}`);
@@ -291,11 +296,10 @@
                     }
                     
                     // Check for equal number of symbols
-                    const targetCount = gridSize/2;
-                    if (rowCounts["🪑"] > targetCount || rowCounts["🌿"] > targetCount) {
+                    if (rowCounts["🪑"] > 2 || rowCounts["🌿"] > 2) {
                         errors.add(`row-${i}`);
                     }
-                    if (colCounts["🪑"] > targetCount || colCounts["🌿"] > targetCount) {
+                    if (colCounts["🪑"] > 2 || colCounts["🌿"] > 2) {
                         errors.add(`col-${i}`);
                     }
                 }
@@ -340,8 +344,7 @@
             function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
-                gridContainer.className = `game-grid grid-${gridSize}x${gridSize}`;
-                gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                gridContainer.style.gridTemplateColumns = "repeat(4, 1fr)";
 
                 grid.forEach((row, rowIndex) => {
                     row.forEach((cell, colIndex) => {
@@ -388,42 +391,22 @@
             }
 
             function generateNewPuzzle() {
-                const sizePatterns = patterns[gridSize];
-                const basePattern = JSON.parse(JSON.stringify(
-                    sizePatterns[Math.floor(Math.random() * sizePatterns.length)]
+                const randomPattern = JSON.parse(JSON.stringify(
+                    patterns[Math.floor(Math.random() * patterns.length)]
                 ));
 
-                for (let i = 0; i < gridSize; i++) {
-                    if (Math.random() < 0.5) {
-                        basePattern[i].reverse();
-                    }
+                // Apply random transformations
+                if (Math.random() < 0.5) {
+                    randomPattern.reverse();
+                }
+                if (Math.random() < 0.5) {
+                    randomPattern.forEach(row => row.reverse());
                 }
 
-                const swapPairs = [];
-                for (let i = 0; i < gridSize - 1; i += 2) {
-                    swapPairs.push([i, i + 1]);
-                }
-
-                swapPairs.forEach(([a, b]) => {
-                    if (Math.random() < 0.5) {
-                        [basePattern[a], basePattern[b]] = [basePattern[b], basePattern[a]];
-                    }
-                });
-
-                return basePattern;
+                return randomPattern;
             }
 
             // Event Listeners
-            document.getElementById("difficultySelect").addEventListener("change", (e) => {
-                gridSize = parseInt(e.target.value);
-                grid = generateNewPuzzle();
-                history = [JSON.parse(JSON.stringify(grid))];
-                currentStep = 0;
-                timer = 0;
-                updateLockedCells();
-                renderGrid();
-            });
-
             document.getElementById("undoBtn").addEventListener("click", () => {
                 if (currentStep > 0) {
                     currentStep--;
