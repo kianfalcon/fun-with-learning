@@ -69,6 +69,53 @@
             background-size: 1.5em 1.5em;
             padding-right: 2.5rem;
         }
+
+        .game-grid {
+            display: grid;
+            gap: 8px;
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 12px;
+            width: fit-content;
+            margin: 24px auto;
+        }
+
+        .game-cell {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .game-cell:hover:not(.locked) {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .game-cell.locked {
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        .grid-8x8 .game-cell {
+            width: 48px;
+            height: 48px;
+            font-size: 20px;
+        }
+
+        .grid-6x6 .game-cell {
+            width: 56px;
+            height: 56px;
+            font-size: 22px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-6">
@@ -89,7 +136,7 @@
         </div>
 
         <!-- Game Grid -->
-        <div id="gameGrid" class="grid gap-4 mt-6 p-8 bg-gray-100 rounded-lg mx-auto" style="grid-template-columns: repeat(4, minmax(0, 1fr)); width: fit-content; max-width: 100%;"></div>
+        <div id="gameGrid" class="game-grid"></div>
         
         <div class="flex justify-center gap-4 mt-6">
             <button id="undoBtn" class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-300 transition">Undo</button>
@@ -140,7 +187,7 @@
             </button>
         </div>
     </div>
-<script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
             let gridSize = 4;
             let errorCheckTimeout = null;
@@ -220,37 +267,30 @@
                     let rowCounts = { "🪑": 0, "🌿": 0 };
                     let colCounts = { "🪑": 0, "🌿": 0 };
                     
-                    // Track positions of each symbol in rows and columns
-                    let rowSymbols = { "🪑": [], "🌿": [] };
-                    let colSymbols = { "🪑": [], "🌿": [] };
-                    
                     for (let j = 0; j < gridSize; j++) {
-                        // Count symbols for balance check
                         if (row[j]) {
                             rowCounts[row[j]]++;
-                            rowSymbols[row[j]].push(j);
                         }
                         if (col[j]) {
                             colCounts[col[j]]++;
-                            colSymbols[col[j]].push(j);
+                        }
+                        
+                        // Check for three consecutive same symbols
+                        if (j < gridSize - 2) {
+                            if (row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
+                                errors.add(`${i}-${j}`);
+                                errors.add(`${i}-${j+1}`);
+                                errors.add(`${i}-${j+2}`);
+                            }
+                            if (col[j] && col[j] === col[j+1] && col[j] === col[j+2]) {
+                                errors.add(`${j}-${i}`);
+                                errors.add(`${j+1}-${i}`);
+                                errors.add(`${j+2}-${i}`);
+                            }
                         }
                     }
                     
-                    // Check for three consecutive same symbols
-                    for (let j = 0; j < gridSize - 2; j++) {
-                        if (row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
-                            errors.add(`${i}-${j}`);
-                            errors.add(`${i}-${j+1}`);
-                            errors.add(`${i}-${j+2}`);
-                        }
-                        if (col[j] && col[j] === col[j+1] && col[j] === col[j+2]) {
-                            errors.add(`${j}-${i}`);
-                            errors.add(`${j+1}-${i}`);
-                            errors.add(`${j+2}-${i}`);
-                        }
-                    }
-                    
-                    // Check for equal number of symbols in rows and columns
+                    // Check for equal number of symbols
                     const targetCount = gridSize/2;
                     if (rowCounts["🪑"] > targetCount || rowCounts["🌿"] > targetCount) {
                         errors.add(`row-${i}`);
@@ -286,13 +326,11 @@
                 ];
                 const randomFact = facts[Math.floor(Math.random() * facts.length)];
 
-                // Add completion class to all cells
-                const cells = document.querySelectorAll('#gameGrid > div');
+                const cells = document.querySelectorAll('.game-cell');
                 cells.forEach(cell => {
                     cell.classList.add('completed-cell');
                 });
 
-                // Show success modal with content
                 document.getElementById('successTitle').textContent = randomMessage;
                 document.getElementById('successTime').textContent = `Completion Time: ${timeSpent}`;
                 document.getElementById('successFact').textContent = `Did you know? ${randomFact}`;
@@ -302,46 +340,28 @@
             function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
-                gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, minmax(0, 1fr))`;
-                
-                const cellSize = gridSize === 8 ? "w-12 h-12" : gridSize === 6 ? "w-14 h-14" : "w-16 h-16";
-                const fontSize = gridSize === 8 ? "text-xl" : "text-2xl";
-                
+                gridContainer.className = `game-grid grid-${gridSize}x${gridSize}`;
+                gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
                 grid.forEach((row, rowIndex) => {
                     row.forEach((cell, colIndex) => {
                         const cellElement = document.createElement("div");
-                        cellElement.classList.add(
-                            cellSize,
-                            fontSize,
-                            "flex",
-                            "items-center",
-                            "justify-center",
-                            "font-bold",
-                            "transition",
-                            "bg-white",
-                            "border-2",
-                            "border-gray-300",
-                            "rounded-lg",
-                            "shadow-sm",
-                            "aspect-square"
-                        );
-                        
+                        cellElement.className = "game-cell";
+
                         if (lockedCells[rowIndex][colIndex]) {
-                            cellElement.classList.add("bg-gray-100");
-                        } else {
-                            cellElement.classList.add("cursor-pointer", "hover:bg-gray-50", "hover:border-gray-400");
+                            cellElement.classList.add("locked");
                         }
-                        
+
                         if (errors.has(`${rowIndex}-${colIndex}`)) {
                             cellElement.classList.add("error-cell");
                         }
-                        
+
                         if (Array.isArray(hintCell) && hintCell.includes(`${rowIndex}-${colIndex}`)) {
                             cellElement.classList.add("hint-cell");
                         }
-                        
+
                         cellElement.innerHTML = cell || "";
-                        
+
                         if (!lockedCells[rowIndex][colIndex]) {
                             cellElement.addEventListener("click", () => {
                                 if (!grid[rowIndex][colIndex]) {
@@ -356,11 +376,9 @@
                                 currentStep++;
                                 renderGrid();
                                 debouncedErrorCheck();
-                                
+
                                 if (checkCompletion()) {
-                                    setTimeout(() => {
-                                        showCompletionMessage();
-                                    }, 100);
+                                    setTimeout(showCompletionMessage, 100);
                                 }
                             });
                         }
@@ -375,14 +393,12 @@
                     sizePatterns[Math.floor(Math.random() * sizePatterns.length)]
                 ));
 
-                // Apply transformations
                 for (let i = 0; i < gridSize; i++) {
                     if (Math.random() < 0.5) {
                         basePattern[i].reverse();
                     }
                 }
 
-                // Create swap pairs based on grid size
                 const swapPairs = [];
                 for (let i = 0; i < gridSize - 1; i += 2) {
                     swapPairs.push([i, i + 1]);
@@ -405,12 +421,6 @@
                 currentStep = 0;
                 timer = 0;
                 updateLockedCells();
-                
-                const cells = document.querySelectorAll('#gameGrid > div');
-                cells.forEach(cell => {
-                    cell.classList.remove('completed-cell');
-                });
-                
                 renderGrid();
             });
 
@@ -476,11 +486,6 @@
                 history = [JSON.parse(JSON.stringify(grid))];
                 updateLockedCells();
                 renderGrid();
-                
-                const cells = document.querySelectorAll('#gameGrid > div');
-                cells.forEach(cell => {
-                    cell.classList.remove('completed-cell');
-                });
             });
 
             document.getElementById("refreshBtn").addEventListener("click", () => {
@@ -490,11 +495,6 @@
                 timer = 0;
                 updateLockedCells();
                 renderGrid();
-                
-                const cells = document.querySelectorAll('#gameGrid > div');
-                cells.forEach(cell => {
-                    cell.classList.remove('completed-cell');
-                });
             });
             
             // Initialize the game
