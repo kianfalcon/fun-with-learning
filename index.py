@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-// Icon components
 const SmallIcon = ({ children }) => (
   <span className="text-base">{children}</span>
 );
@@ -10,42 +9,12 @@ const GameIcon = ({ children }) => (
 );
 
 const BinaryPuzzleGame = () => {
-  const puzzleConfigurations = [
-    [
-      ['recycle', null, 'chair', null],
-      [null, 'chair', null, 'recycle'],
-      ['chair', null, 'recycle', null],
-      [null, 'recycle', null, 'chair']
-    ],
-    [
-      ['chair', null, 'recycle', null],
-      [null, 'recycle', null, 'chair'],
-      ['recycle', null, 'chair', null],
-      [null, 'chair', null, 'recycle']
-    ],
-    [
-      [null, 'chair', null, 'recycle'],
-      ['recycle', null, 'chair', null],
-      [null, 'recycle', null, 'chair'],
-      ['chair', null, 'recycle', null]
-    ]
+  const initialGrid = [
+    ['chair', null, 'recycle', null],
+    [null, 'recycle', null, 'chair'],
+    ['chair', null, 'recycle', null],
+    [null, 'recycle', null, 'chair']
   ];
-
-  const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0);
-  const initialGrid = puzzleConfigurations[currentPuzzleIndex];
-
-  const handleRefresh = () => {
-    const nextIndex = (currentPuzzleIndex + 1) % puzzleConfigurations.length;
-    setCurrentPuzzleIndex(nextIndex);
-    setGrid(puzzleConfigurations[nextIndex]);
-    setHistory([puzzleConfigurations[nextIndex]]);
-    setCurrentStep(0);
-    setErrors([]);
-    setErrorCells(new Set());
-    setHintCell(null);
-    setSeconds(0);
-    setIsActive(true);
-  };
 
   const [grid, setGrid] = useState(initialGrid);
   const [history, setHistory] = useState([initialGrid]);
@@ -57,7 +26,6 @@ const BinaryPuzzleGame = () => {
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(true);
 
-  // Timer effect
   React.useEffect(() => {
     let interval = null;
     if (isActive) {
@@ -68,140 +36,89 @@ const BinaryPuzzleGame = () => {
     return () => clearInterval(interval);
   }, [isActive]);
 
-  // Format time for display
   const formatTime = (totalSeconds) => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleClear = () => {
-    const clearedGrid = initialGrid.map(row => 
-      row.map(cell => cell === null ? null : cell)
-    );
-    setGrid(clearedGrid);
-    setHistory([clearedGrid]);
-    setCurrentStep(0);
-    setErrors([]);
-    setErrorCells(new Set());
-    setHintCell(null);
-    setSeconds(0); // Reset timer
-    setIsActive(true); // Start timer again
-  };
-
-  const validateCell = (grid, row, col) => {
+  const validateCell = (grid) => {
     const errorCells = new Set();
     const errors = new Map();
     
-    // Check current row
-    const currentRow = grid[row];
-    const chairs = currentRow.filter(cell => cell === 'chair').length;
-    const recycles = currentRow.filter(cell => cell === 'recycle').length;
-    
-    // Check three consecutive in row
-    for (let j = 0; j < 2; j++) {
-      if (grid[row][j] && grid[row][j] === grid[row][j+1] && grid[row][j] === grid[row][j+2]) {
-        errors.set('consecutive', {
-          message: `No more than 2 same symbols may be next to each other`,
-          type: 'count'
-        });
-        // Highlight full row
-        for (let k = 0; k < 4; k++) {
-          errorCells.add(`${row}-${k}`);
-        }
-      }
-    }
-
-    // Check three consecutive in column
-    for (let i = 0; i < 2; i++) {
-      if (grid[i][col] && grid[i][col] === grid[i+1][col] && grid[i][col] === grid[i+2][col]) {
-        errors.set('consecutive', {
-          message: `No more than 2 same symbols may be next to each other`,
-          type: 'count'
-        });
-        // Highlight full column
-        for (let k = 0; k < 4; k++) {
-          errorCells.add(`${k}-${col}`);
-        }
-      }
-    }
-
-    // Check row balance
-    if (chairs !== recycles && chairs + recycles === 4) {
-      errors.set('balance', {
-        message: `Each row and column must contain equal number of symbols`,
-        type: 'balance'
-      });
-      // Highlight full row
-      for (let i = 0; i < 4; i++) {
-        errorCells.add(`${row}-${i}`);
-      }
-    }
-
-    // Check column balance
-    const currentCol = grid.map(r => r[col]);
-    const colChairs = currentCol.filter(cell => cell === 'chair').length;
-    const colRecycles = currentCol.filter(cell => cell === 'recycle').length;
-    if (colChairs !== colRecycles && colChairs + colRecycles === 4) {
-      errors.set('balance', {
-        message: `Each row and column must contain equal number of symbols`,
-        type: 'balance'
-      });
-      // Highlight full column
-      for (let i = 0; i < 4; i++) {
-        errorCells.add(`${i}-${col}`);
-      }
-    }
-
-    // Check = patterns
-    const equalPatterns = [[[0,0], [0,1]], [[0,0], [1,0]]];
-    equalPatterns.forEach(([[r1, c1], [r2, c2]]) => {
-      if ((row === r1 && col === c1) || (row === r2 && col === c2)) {
-        const cell1 = grid[r1][c1];
-        const cell2 = grid[r2][c2];
-        if (cell1 && cell2 && cell1 !== cell2) {
-          errors.set('equal-pattern', {
-            message: `Cells connected by = must be the same`,
-            type: 'equal-pattern'
+    // Check three consecutive horizontally
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j <= 1; j++) {
+        if (grid[i][j] && grid[i][j+1] && grid[i][j+2] &&
+            grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) {
+          errors.set(`consecutive-row-${i}-${j}`, {
+            message: `Row ${i+1} has three consecutive ${grid[i][j] === 'chair' ? 'chairs' : 'leaves'}`,
+            type: 'consecutive',
+            cells: [`${i}-${j}`, `${i}-${j+1}`, `${i}-${j+2}`]
           });
-          errorCells.add(`${r1}-${c1}`);
-          errorCells.add(`${r2}-${c2}`);
+          for (let k = 0; k < 4; k++) {
+            errorCells.add(`${i}-${k}`);
+          }
         }
       }
-    });
+    }
+
+    // Check three consecutive vertically
+    for (let j = 0; j < 4; j++) {
+      for (let i = 0; i <= 1; i++) {
+        if (grid[i][j] && grid[i+1][j] && grid[i+2][j] &&
+            grid[i][j] === grid[i+1][j] && grid[i][j] === grid[i+2][j]) {
+          errors.set(`consecutive-col-${j}-${i}`, {
+            message: `Column ${j+1} has three consecutive ${grid[i][j] === 'chair' ? 'chairs' : 'leaves'}`,
+            type: 'consecutive',
+            cells: [`${i}-${j}`, `${i+1}-${j}`, `${i+2}-${j}`]
+          });
+          for (let k = 0; k < 4; k++) {
+            errorCells.add(`${k}-${j}`);
+          }
+        }
+      }
+    }
+
+    // Row balance check
+    for (let i = 0; i < 4; i++) {
+      const rowCells = grid[i].filter(cell => cell !== null);
+      if (rowCells.length === 4) {
+        const chairs = rowCells.filter(cell => cell === 'chair').length;
+        const recycles = rowCells.filter(cell => cell === 'recycle').length;
+        if (chairs !== 2 || recycles !== 2) {
+          errors.set(`balance-row-${i}`, {
+            message: `Row ${i+1} must have 2 chairs and 2 leaves`,
+            type: 'balance',
+            cells: Array.from({length: 4}, (_, j) => `${i}-${j}`)
+          });
+          for (let j = 0; j < 4; j++) {
+            errorCells.add(`${i}-${j}`);
+          }
+        }
+      }
+    }
+
+    // Column balance check
+    for (let j = 0; j < 4; j++) {
+      const colCells = grid.map(row => row[j]).filter(cell => cell !== null);
+      if (colCells.length === 4) {
+        const chairs = colCells.filter(cell => cell === 'chair').length;
+        const recycles = colCells.filter(cell => cell === 'recycle').length;
+        if (chairs !== 2 || recycles !== 2) {
+          errors.set(`balance-col-${j}`, {
+            message: `Column ${j+1} must have 2 chairs and 2 leaves`,
+            type: 'balance',
+            cells: Array.from({length: 4}, (_, i) => `${i}-${j}`)
+          });
+          for (let i = 0; i < 4; i++) {
+            errorCells.add(`${i}-${j}`);
+          }
+        }
+      }
+    }
 
     return { errors: [...errors.values()], errorCells };
-  };
-
-  const isGameComplete = (grid) => {
-    // Check if all cells are filled
-    const isFilled = grid.every(row => row.every(cell => cell !== null));
-    if (!isFilled) return false;
-
-    // Check rows and columns for balance (2 of each symbol)
-    for (let i = 0; i < 4; i++) {
-      const row = grid[i];
-      const col = grid.map(r => r[i]);
-      
-      const rowChairs = row.filter(cell => cell === 'chair').length;
-      const rowRecycles = row.filter(cell => cell === 'recycle').length;
-      const colChairs = col.filter(cell => cell === 'chair').length;
-      const colRecycles = col.filter(cell => cell === 'recycle').length;
-      
-      if (rowChairs !== 2 || rowRecycles !== 2 || colChairs !== 2 || colRecycles !== 2) return false;
-    }
-
-    // Check for three consecutive symbols
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 2; j++) {
-        // Check horizontal
-        if (grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) return false;
-        // Check vertical
-        if (grid[j][i] === grid[j+1][i] && grid[j][i] === grid[j+2][i]) return false;
-      }
-    }
-
-    return true;
   };
 
   const handleCellClick = (row, col) => {
@@ -220,23 +137,22 @@ const BinaryPuzzleGame = () => {
 
     setGrid(newGrid);
     
-    // Delay error checking by 800ms
-    setTimeout(() => {
-      const { errors: newErrors, errorCells: newErrorCells } = validateCell(newGrid, row, col);
-      setErrors(newErrors);
-      setErrorCells(newErrorCells);
-    }, 800);
+    // Only maintain error cells from consecutive and balance rules
+    const { errors: newErrors, errorCells: newErrorCells } = validateCell(newGrid);
     
-    // Check for victory condition
-    if (isGameComplete(newGrid)) {
-      setIsActive(false); // Stop timer
-    }
+    setErrors(newErrors);
+    setErrorCells(newErrorCells);
     
     // Update history
     const newHistory = history.slice(0, currentStep + 1);
     newHistory.push(JSON.parse(JSON.stringify(newGrid)));
     setHistory(newHistory);
     setCurrentStep(currentStep + 1);
+
+    // Check for completion
+    if (isGameComplete(newGrid)) {
+      setIsActive(false);
+    }
   };
 
   const handleUndo = () => {
@@ -248,18 +164,23 @@ const BinaryPuzzleGame = () => {
       
       // Only check for consecutive and balance errors when undoing
       const { errors: newErrors, errorCells: newErrorCells } = validateCell(previousGrid);
-      const filteredErrors = newErrors.filter(error => 
-        error.type === 'consecutive' || error.type === 'balance'
-      );
-      
-      const filteredErrorCells = new Set();
-      filteredErrors.forEach(error => {
-        error.cells.forEach(cell => filteredErrorCells.add(cell));
-      });
-      
-      setErrors(filteredErrors);
-      setErrorCells(filteredErrorCells);
+      setErrors(newErrors);
+      setErrorCells(newErrorCells);
     }
+  };
+
+  const handleClear = () => {
+    const clearedGrid = initialGrid.map(row => 
+      row.map(cell => cell === null ? null : cell)
+    );
+    setGrid(clearedGrid);
+    setHistory([clearedGrid]);
+    setCurrentStep(0);
+    setErrors([]);
+    setErrorCells(new Set());
+    setHintCell(null);
+    setSeconds(0);
+    setIsActive(true);
   };
 
   const getHint = () => {
@@ -300,6 +221,37 @@ const BinaryPuzzleGame = () => {
     }, 3000);
   };
 
+  const isGameComplete = (grid) => {
+    // Check if all cells are filled
+    const isFilled = grid.every(row => row.every(cell => cell !== null));
+    if (!isFilled) return false;
+
+    // Check rows and columns for balance (2 of each symbol)
+    for (let i = 0; i < 4; i++) {
+      const row = grid[i];
+      const col = grid.map(r => r[i]);
+      
+      const rowChairs = row.filter(cell => cell === 'chair').length;
+      const rowRecycles = row.filter(cell => cell === 'recycle').length;
+      const colChairs = col.filter(cell => cell === 'chair').length;
+      const colRecycles = col.filter(cell => cell === 'recycle').length;
+      
+      if (rowChairs !== 2 || rowRecycles !== 2 || colChairs !== 2 || colRecycles !== 2) return false;
+    }
+
+    // Check for three consecutive symbols
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 2; j++) {
+        // Check horizontal
+        if (grid[i][j] === grid[i][j+1] && grid[i][j] === grid[i][j+2]) return false;
+        // Check vertical
+        if (grid[j][i] === grid[j+1][i] && grid[j][i] === grid[j+2][i]) return false;
+      }
+    }
+
+    return true;
+  };
+
   return (
     <div className="flex flex-col items-center gap-6 p-6 max-w-md mx-auto bg-white rounded-xl shadow-lg">
       {/* Title, Subtitle, Timer and Refresh */}
@@ -312,7 +264,7 @@ const BinaryPuzzleGame = () => {
         <div className="flex items-center justify-center gap-2 mt-2">
           <div className="text-lg font-mono">{formatTime(seconds)}</div>
           <button
-            onClick={handleRefresh}
+            onClick={handleClear}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
             title="New Puzzle"
           >
@@ -325,7 +277,6 @@ const BinaryPuzzleGame = () => {
 
       {/* Game grid */}
       <div className="grid grid-cols-4 gap-px bg-gray-300 p-px rounded-lg">
-        {/* Grid Cells */}
         {grid.map((row, rowIndex) => (
           row.map((cell, colIndex) => {
             const isInitialCell = initialGrid[rowIndex][colIndex] !== null;
@@ -357,34 +308,9 @@ const BinaryPuzzleGame = () => {
         ))}
       </div>
 
-      {/* Victory Message */}
-      {isGameComplete(grid) && (
-        <div className="bg-green-50 border-2 border-green-300 p-4 rounded-lg shadow-lg w-[264px]">
-          <div className="text-center">
-            <h3 className="text-lg font-bold text-green-700">Congratulations! 🎉</h3>
-            <p className="text-sm text-green-600 mt-2">
-              You completed the puzzle in {formatTime(seconds)}!
-            </p>
-            <div className="mt-4 p-3 bg-green-100 rounded-lg">
-              <p className="text-xs text-green-700 italic">
-                "Did you know? Sustainable furniture manufacturing can reduce carbon emissions by up to 45% compared to traditional methods."
-              </p>
-            </div>
-            <a 
-              href="https://www.eagle-grp.com/kian-falcon-manufacturing-llp/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-block mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
-            >
-              Learn more about KIAN Falcon
-            </a>
-          </div>
-        </div>
-      )}
-
       {/* Error Messages */}
       {errors.length > 0 && (
-        <div className="flex flex-col gap-1 w-[264px]">
+        <div className="flex flex-col gap-1 w-64">
           {errors.filter(error => 
             error.type === 'consecutive' || error.type === 'balance'
           ).map((error, index) => (
@@ -420,8 +346,8 @@ const BinaryPuzzleGame = () => {
 
       {/* Hint message */}
       {showHint && (
-        <div className="text-sm bg-yellow-50 border-2 border-yellow-200 p-3 rounded-lg w-[264px]">
-          <span className="font-medium">
+        <div className="text-sm bg-yellow-50 border-2 border-yellow-200 p-3 rounded-lg w-64">
+ <span className="font-medium">
             {isGameComplete(grid) 
               ? "All cells are correct!" 
               : hintCell 
@@ -464,6 +390,31 @@ const BinaryPuzzleGame = () => {
           </li>
         </ul>
       </div>
+
+      {/* Victory Message */}
+      {isGameComplete(grid) && (
+        <div className="bg-green-50 border-2 border-green-300 p-4 rounded-lg shadow-lg w-64">
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-green-700">Congratulations! 🎉</h3>
+            <p className="text-sm text-green-600 mt-2">
+              You completed the puzzle in {formatTime(seconds)}!
+            </p>
+            <div className="mt-4 p-3 bg-green-100 rounded-lg">
+              <p className="text-xs text-green-700 italic">
+                "Did you know? Sustainable furniture manufacturing can reduce carbon emissions by up to 45% compared to traditional methods."
+              </p>
+            </div>
+            <a 
+              href="https://www.eagle-grp.com/kian-falcon-manufacturing-llp/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+            >
+              Learn more about KIAN Falcon
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
