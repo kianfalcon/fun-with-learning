@@ -301,23 +301,34 @@
            function renderGrid(errors = new Set()) {
                 const gridContainer = document.getElementById("gameGrid");
                 gridContainer.innerHTML = "";
-                gridContainer.className = "grid gap-2 mt-6 p-4 bg-gray-100 rounded-lg";
                 gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, minmax(0, 1fr))`;
-                gridContainer.style.justifyItems = "center";
                 
-                const cellSize = gridSize === 8 ? "w-12 h-12" : "w-16 h-16";
+                const cellSize = gridSize === 8 ? "w-12 h-12" : gridSize === 6 ? "w-14 h-14" : "w-16 h-16";
                 const fontSize = gridSize === 8 ? "text-xl" : "text-2xl";
                 
                 grid.forEach((row, rowIndex) => {
                     row.forEach((cell, colIndex) => {
                         const cellElement = document.createElement("div");
-                        cellElement.classList.add(cellSize, fontSize, "flex", "items-center", "justify-center", "font-bold", "transition", "bg-white", "border", "border-gray-300", "rounded-lg", "shadow-sm");
+                        cellElement.classList.add(
+                            cellSize,
+                            fontSize,
+                            "flex",
+                            "items-center",
+                            "justify-center",
+                            "font-bold",
+                            "transition",
+                            "bg-white",
+                            "border-2",
+                            "border-gray-300",
+                            "rounded-lg",
+                            "shadow-sm",
+                            "aspect-square"
+                        );
                         
                         if (lockedCells[rowIndex][colIndex]) {
                             cellElement.classList.add("bg-gray-100");
-                            cellElement.classList.remove("cursor-pointer", "hover:bg-gray-100");
                         } else {
-                            cellElement.classList.add("cursor-pointer", "hover:bg-gray-100");
+                            cellElement.classList.add("cursor-pointer", "hover:bg-gray-50", "hover:border-gray-400");
                         }
                         
                         if (errors.has(`${rowIndex}-${colIndex}`)) {
