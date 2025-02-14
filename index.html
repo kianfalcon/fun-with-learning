@@ -34,21 +34,37 @@
                     let rowCounts = { "🪑": 0, "🌿": 0 };
                     let colCounts = { "🪑": 0, "🌿": 0 };
                     
+                    // Check for non-consecutive repeating symbols in rows
                     for (let j = 0; j < 4; j++) {
                         rowCounts[row[j]] = (rowCounts[row[j]] || 0) + 1;
                         colCounts[col[j]] = (colCounts[col[j]] || 0) + 1;
-                        
-                        if (j < 2 && row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
-                            errors.add(`${i}-${j}`);
-                            errors.add(`${i}-${j+1}`);
-                            errors.add(`${i}-${j+2}`);
+
+                        // Check for three or more same symbols in row (consecutive or not)
+                        if (row[j]) {
+                            let symbolCount = row.filter(cell => cell === row[j]).length;
+                            if (symbolCount > 2) {
+                                row.forEach((cell, index) => {
+                                    if (cell === row[j]) {
+                                        errors.add(`${i}-${index}`);
+                                    }
+                                });
+                            }
                         }
-                        if (j < 2 && col[j] && col[j] === col[j+1] && col[j] === col[j+2]) {
-                            errors.add(`${j}-${i}`);
-                            errors.add(`${j+1}-${i}`);
-                            errors.add(`${j+2}-${i}`);
+
+                        // Check for three or more same symbols in column (consecutive or not)
+                        if (col[j]) {
+                            let symbolCount = col.filter(cell => cell === col[j]).length;
+                            if (symbolCount > 2) {
+                                col.forEach((cell, index) => {
+                                    if (cell === col[j]) {
+                                        errors.add(`${index}-${i}`);
+                                    }
+                                });
+                            }
                         }
                     }
+                    
+                    // Check for equal number of symbols in rows and columns
                     if (rowCounts["🪑"] !== rowCounts["🌿"]) errors.add(`row-${i}`);
                     if (colCounts["🪑"] !== colCounts["🌿"]) errors.add(`col-${i}`);
                 }
@@ -61,14 +77,25 @@
             }
 
             function showCompletionMessage() {
+                const timeSpent = document.getElementById("timer").textContent;
+                const messages = [
+                    "You've mastered the art of sustainable furniture arrangement! 🌟",
+                    "A perfect balance of style and sustainability! 🎯",
+                    "You're a natural at eco-friendly design! 🌿",
+                    "Brilliant furniture arrangement skills! ⭐"
+                ];
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                
                 const facts = [
                     "Recycling one aluminum can saves enough energy to run a TV for 3 hours!",
                     "Sustainable furniture reduces deforestation and carbon footprint.",
-                    "Using bamboo furniture helps in absorbing CO2 at a much higher rate than other trees."
+                    "Using bamboo furniture helps in absorbing CO2 at a much higher rate than other trees.",
+                    "Eco-friendly furniture production can reduce carbon emissions by up to 70%!",
+                    "Sustainable furniture design helps preserve our forests for future generations."
                 ];
-                alert(`🎉 Congratulations! You completed the puzzle in ${document.getElementById("timer").textContent}.
+                const randomFact = facts[Math.floor(Math.random() * facts.length)];
 
-Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
+                alert(`🎉 ${randomMessage}\n\nTime: ${timeSpent}\n\nDid you know? ${randomFact}\n\n🏆 You've completed the puzzle following all sustainability rules!`);
             }
 
             function renderGrid() {
@@ -91,7 +118,7 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
                         if (errors.has(`${rowIndex}-${colIndex}`)) {
                             cellElement.classList.add("bg-red-200");
                         }
-                        if (hintCell === `${rowIndex}-${colIndex}`) {
+                        if (Array.isArray(hintCell) && hintCell.includes(`${rowIndex}-${colIndex}`)) {
                             cellElement.classList.add("bg-yellow-200");
                         }
                         cellElement.innerHTML = cell || "";
@@ -133,30 +160,33 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
             document.getElementById("hintBtn").addEventListener("click", () => {
                 let errors = Array.from(checkErrors());
                 if (errors.length > 0) {
-                    // Filter out row/column errors to focus on specific cells
-                    let cellErrors = errors.filter(err => err.includes('-'));
+                    // Set all error cells as hint cells for highlighting
+                    let cellErrors = errors.filter(err => err.includes('-') && !err.startsWith('row-') && !err.startsWith('col-'));
+                    
                     if (cellErrors.length > 0) {
-                        hintCell = cellErrors[0];
-                        const [row, col] = hintCell.split('-').map(Number);
-                        let hintMessage = "";
+                        // Highlight all error cells at once
+                        hintCell = cellErrors;
+                        let message = "Highlighted cells show potential issues:";
                         
-                        // Check if this is part of a triplet
-                        if (
-                            (col < 2 && grid[row][col] && grid[row][col] === grid[row][col+1] && grid[row][col] === grid[row][col+2]) ||
-                            (col > 1 && grid[row][col] && grid[row][col] === grid[row][col-1] && grid[row][col] === grid[row][col-2])
-                        ) {
-                            hintMessage = "Avoid three consecutive same symbols";
+                        if (cellErrors.length >= 3) {
+                            message += "\n- More than two same symbols in a row or column";
                         }
                         
-                        // Show the hint with a message
-                        alert(`Hint: ${hintMessage || "Check this cell for balance"}`);
+                        const rowError = errors.find(err => err.startsWith('row-'));
+                        const colError = errors.find(err => err.startsWith('col-'));
+                        
+                        if (rowError || colError) {
+                            message += "\n- Check for equal numbers of 🪑 and 🌿";
+                        }
+                        
+                        alert(message);
                         renderGrid();
                         setTimeout(() => {
                             hintCell = null;
                             renderGrid();
                         }, 3000);
                     } else if (errors.length > 0) {
-                        // If no specific cell errors, give a general hint about row/column balance
+                        // Handle row/column balance errors
                         const rowError = errors.find(err => err.startsWith('row-'));
                         if (rowError) {
                             const rowNum = parseInt(rowError.split('-')[1]) + 1;
@@ -167,7 +197,7 @@ Did you know? ${facts[Math.floor(Math.random() * facts.length)]}`);
                         }
                     }
                 } else {
-                    alert("You're doing great! No errors to hint about.");
+                    alert("Looking good! All rules are being followed.");
                 }
             });
 
