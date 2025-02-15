@@ -76,7 +76,7 @@
             height: 64px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-center: center;
             background: white;
             border: 2px solid #e5e7eb;
             border-radius: 8px;
@@ -134,7 +134,7 @@
                 <li class="flex items-start gap-3">
                     <div class="flex-shrink-0 w-8 text-2xl">2.</div>
                     <div>
-                        <p class="mb-2">No more than two same symbols consecutively:</p>
+                        <p class="mb-2">No more than two same symbols in each row or column:</p>
                         <div class="flex gap-2 items-center">
                             <div class="flex gap-1 bg-white p-2 rounded-lg border-2 border-green-500">
                                 <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
@@ -143,6 +143,7 @@
                             <span class="mx-2">✅</span>
                             <div class="flex gap-1 bg-white p-2 rounded-lg border-2 border-red-500">
                                 <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
+                                <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🌿</div>
                                 <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
                                 <div class="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg text-lg">🪑</div>
                             </div>
@@ -268,39 +269,43 @@
                 for (let i = 0; i < 4; i++) {
                     let row = grid[i];
                     let col = grid.map(r => r[i]);
-                    let rowCounts = { "🪑": 0, "🌿": 0 };
-                    let colCounts = { "🪑": 0, "🌿": 0 };
                     
-                    // Count symbols
+                    // Track positions of each symbol in rows and columns
+                    let rowChairs = [], rowPlants = [];
+                    let colChairs = [], colPlants = [];
+                    
                     for (let j = 0; j < 4; j++) {
-                        if (row[j]) {
-                            rowCounts[row[j]]++;
-                        }
-                        if (col[j]) {
-                            colCounts[col[j]]++;
-                        }
+                        // Track positions for each symbol in rows
+                        if (row[j] === "🪑") rowChairs.push(j);
+                        if (row[j] === "🌿") rowPlants.push(j);
                         
-                        // Check for three consecutive same symbols
-                        if (j < 2) {
-                            if (row[j] && row[j] === row[j+1] && row[j] === row[j+2]) {
-                                errors.add(`${i}-${j}`);
-                                errors.add(`${i}-${j+1}`);
-                                errors.add(`${i}-${j+2}`);
-                            }
-                            if (col[j] && col[j] === col[j+1] && col[j] === col[j+2]) {
-                                errors.add(`${j}-${i}`);
-                                errors.add(`${j+1}-${i}`);
-                                errors.add(`${j+2}-${i}`);
-                            }
-                        }
+                        // Track positions for each symbol in columns
+                        if (col[j] === "🪑") colChairs.push(j);
+                        if (col[j] === "🌿") colPlants.push(j);
                     }
                     
-                    // Check for equal number of symbols
-                    if (rowCounts["🪑"] > 2 || rowCounts["🌿"] > 2) {
-                        errors.add(`row-${i}`);
+                    // Check for more than two of the same symbol in any row
+                    if (rowChairs.length > 2) {
+                        rowChairs.forEach(colIndex => {
+                            errors.add(`${i}-${colIndex}`);
+                        });
                     }
-                    if (colCounts["🪑"] > 2 || colCounts["🌿"] > 2) {
-                        errors.add(`col-${i}`);
+                    if (rowPlants.length > 2) {
+                        rowPlants.forEach(colIndex => {
+                            errors.add(`${i}-${colIndex}`);
+                        });
+                    }
+                    
+                    // Check for more than two of the same symbol in any column
+                    if (colChairs.length > 2) {
+                        colChairs.forEach(rowIndex => {
+                            errors.add(`${rowIndex}-${i}`);
+                        });
+                    }
+                    if (colPlants.length > 2) {
+                        colPlants.forEach(rowIndex => {
+                            errors.add(`${rowIndex}-${i}`);
+                        });
                     }
                 }
                 return errors;
@@ -406,7 +411,6 @@
                 return randomPattern;
             }
 
-            // Event Listeners
             document.getElementById("undoBtn").addEventListener("click", () => {
                 if (currentStep > 0) {
                     currentStep--;
@@ -421,19 +425,12 @@
                 if (errors.length > 0) {
                     let cellErrors = errors.filter(err => err.includes('-') && !err.startsWith('row-') && !err.startsWith('col-'));
                     
-                        if (cellErrors.length > 0) {
+                    if (cellErrors.length > 0) {
                         hintCell = cellErrors;
                         let message = "Highlighted cells show potential issues:";
                         
                         if (cellErrors.length >= 3) {
                             message += "<br>• More than two same symbols in a row or column";
-                        }
-                        
-                        const rowError = errors.find(err => err.startsWith('row-'));
-                        const colError = errors.find(err => err.startsWith('col-'));
-                        
-                        if (rowError || colError) {
-                            message += "<br>• Check for equal numbers of 🪑 and 🌿";
                         }
 
                         document.getElementById('hintMessage').innerHTML = message;
@@ -444,19 +441,7 @@
                             hintCell = null;
                             renderGrid();
                         }, 3000);
-                    } else if (errors.length > 0) {
-                        const rowError = errors.find(err => err.startsWith('row-'));
-                        let message = '';
-                        if (rowError) {
-                            const rowNum = parseInt(rowError.split('-')[1]) + 1;
-                            message = `Row ${rowNum} needs equal numbers of 🪑 and 🌿`;
-                        } else {
-                            const colNum = parseInt(errors[0].split('-')[1]) + 1;
-                            message = `Column ${colNum} needs equal numbers of 🪑 and 🌿`;
-                        }
-                        document.getElementById('hintMessage').textContent = message;
-                        document.getElementById('hintModal').style.display = 'flex';
-                    }
+                    } 
                 } else {
                     document.getElementById('hintMessage').textContent = "Looking good! All rules are being followed.";
                     document.getElementById('hintModal').style.display = 'flex';
