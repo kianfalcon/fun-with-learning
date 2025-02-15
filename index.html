@@ -51,8 +51,8 @@
             100% { background-color: #fef08a; }
         }
 
-        .error-cell {
-            animation: errorPulse 2s infinite;
+        .-cell {
+            animation: Pulse 2s infinite;
         }
 
         @keyframes errorPulse {
@@ -258,7 +258,7 @@
              const debouncedErrorCheck = debounce(() => {
                 const errors = checkErrors();
                 renderGrid(errors);
-            }, 800);  // 0.8 second delay
+            }, 1200);  // 0.8 second delay
 
                function checkErrors() {
                 let errors = new Set();
