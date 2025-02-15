@@ -262,7 +262,7 @@
                 renderGrid(errors);
             }, 500);
 
-            function checkErrors() {
+               function checkErrors() {
                 let errors = new Set();
                 
                 // Check rows and columns
@@ -270,41 +270,39 @@
                     let row = grid[i];
                     let col = grid.map(r => r[i]);
                     
-                    // Track positions of each symbol in rows and columns
-                    let rowChairs = [], rowPlants = [];
-                    let colChairs = [], colPlants = [];
+                    // Count symbols in each row
+                    let rowSymbols = { "🪑": [], "🌿": [] };
+                    let colSymbols = { "🪑": [], "🌿": [] };
                     
+                    // Count and store positions
                     for (let j = 0; j < 4; j++) {
-                        // Track positions for each symbol in rows
-                        if (row[j] === "🪑") rowChairs.push(j);
-                        if (row[j] === "🌿") rowPlants.push(j);
-                        
-                        // Track positions for each symbol in columns
-                        if (col[j] === "🪑") colChairs.push(j);
-                        if (col[j] === "🌿") colPlants.push(j);
+                        if (row[j] === "🪑") rowSymbols["🪑"].push(j);
+                        if (row[j] === "🌿") rowSymbols["🌿"].push(j);
+                        if (col[j] === "🪑") colSymbols["🪑"].push(j);
+                        if (col[j] === "🌿") colSymbols["🌿"].push(j);
                     }
-                    
-                    // Check for more than two of the same symbol in any row
-                    if (rowChairs.length > 2) {
-                        rowChairs.forEach(colIndex => {
-                            errors.add(`${i}-${colIndex}`);
+
+                    // Check rows for more than two of same symbol
+                    if (rowSymbols["🪑"].length > 2) {
+                        rowSymbols["🪑"].forEach(col => {
+                            errors.add(`${i}-${col}`);
                         });
                     }
-                    if (rowPlants.length > 2) {
-                        rowPlants.forEach(colIndex => {
-                            errors.add(`${i}-${colIndex}`);
+                    if (rowSymbols["🌿"].length > 2) {
+                        rowSymbols["🌿"].forEach(col => {
+                            errors.add(`${i}-${col}`);
                         });
                     }
-                    
-                    // Check for more than two of the same symbol in any column
-                    if (colChairs.length > 2) {
-                        colChairs.forEach(rowIndex => {
-                            errors.add(`${rowIndex}-${i}`);
+
+                    // Check columns for more than two of same symbol
+                    if (colSymbols["🪑"].length > 2) {
+                        colSymbols["🪑"].forEach(row => {
+                            errors.add(`${row}-${i}`);
                         });
                     }
-                    if (colPlants.length > 2) {
-                        colPlants.forEach(rowIndex => {
-                            errors.add(`${rowIndex}-${i}`);
+                    if (colSymbols["🌿"].length > 2) {
+                        colSymbols["🌿"].forEach(row => {
+                            errors.add(`${row}-${i}`);
                         });
                     }
                 }
