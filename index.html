@@ -255,10 +255,10 @@
                 };
             }
 
-            const debouncedErrorCheck = debounce(() => {
+             const debouncedErrorCheck = debounce(() => {
                 const errors = checkErrors();
                 renderGrid(errors);
-            }, 500);
+            }, 800);  // 0.8 second delay
 
                function checkErrors() {
                 let errors = new Set();
